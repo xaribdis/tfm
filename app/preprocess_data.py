@@ -3,12 +3,12 @@ from schemas import traffic_sensor_schema
 
 spark_session = (SparkSession
                     .builder
-                    .config("spark.jars.packages", "com.databricks:spark-xml_1.12:0.13.0") \
+                    .config("spark.jars.packages", "com.databricks:spark-xml_2.12:0.13.0") \
                     .getOrCreate()
                 )
 
 logger = spark_session._jvm.org.apache.log4j
-logger.LogManager.getLogger("org").setLevel(logger.Level.WARN)
+logger.LogManager.getLogger("org").setLevel(logger.Level.FATAL)
 
 customSchema = traffic_sensor_schema
 

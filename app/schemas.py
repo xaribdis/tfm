@@ -9,6 +9,7 @@ traffic_sensor_schema = StructType([
     StructField("carga", IntegerType(), True),
     StructField("nivelServicio", IntegerType(), True),
     StructField("intensidadSat", IntegerType(), True),
+    StructField("velocidad", IntegerType(), True),
     StructField("error", StringType(), True),
     StructField("subarea", IntegerType(), True),
     StructField("st_x", DoubleType(), True),
