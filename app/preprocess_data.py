@@ -2,7 +2,7 @@ from pyspark.sql.functions import lit
 import requests
 
 
-# Request the data to the url and save in in an xml file
+# Request the data to the url and save in an xml file
 def request_data():
     url = "https://datos.madrid.es/egob/catalogo/202087-0-trafico-intensidad.xml"
     r = requests.get(url)

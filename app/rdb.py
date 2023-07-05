@@ -35,7 +35,10 @@ def get_redis() -> Redis:
 
 
 def load_to_redis(df):
+    # TODO Check that this works
+    # TODO add ttl
     df.write\
         .format("org.apache.spark.sql.redis")\
         .option("table", "last24hour")\
+        .option("ttl", 300) \
         .save()
