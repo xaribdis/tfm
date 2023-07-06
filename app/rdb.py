@@ -36,7 +36,7 @@ def get_redis() -> Redis:
 
 
 def json_to_redis(data, r: Redis) -> None:
-    r.json().set('doc', '$', data, )
+    r.json().set('doc', '$', data)
 
 
 # def load_to_redis(df):

@@ -19,9 +19,11 @@ def get_spark_session() -> SparkSession:
 
 if __name__ == "__main__":
     spark_session = get_spark_session()
-    df = read_data(spark_session, custom_schema)
-    data = df_to_json(df)
-    r = get_redis()
-    json_to_redis(data, r)
-    test = r.json().get('doc', '$')
-    print(test)
+    # TODO load last 24 hours data from mongo
+    while True:
+        # TODO filter out oldest entries
+        df = read_data(spark_session, custom_schema)
+        # TODO union with last 24 hours df
+
+
+
