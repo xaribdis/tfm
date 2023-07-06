@@ -3,6 +3,7 @@ import redis
 import structlog
 from redis.client import Redis
 
+
 log = structlog.get_logger("streaming-traffic-data-app.redis")
 
 
@@ -19,7 +20,7 @@ def connect_to_redis() -> Redis:
     # TODO: settings.py
     log.info("Connecting to Redis...")
     return redis.Redis(
-        host="0.0.0.0",
+        host="localhost",
         port=6379,
         password=None,
         db=0,
@@ -32,6 +33,10 @@ def get_redis() -> Redis:
     if _rdb.client is None:
         _rdb.client = connect_to_redis()
     return _rdb.client
+
+
+def json_to_redis(data, r: Redis) -> None:
+    r.json().set('doc', '$', data, )
 
 
 # def load_to_redis(df):

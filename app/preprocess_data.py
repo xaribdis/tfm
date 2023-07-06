@@ -28,3 +28,7 @@ def read_data(spark_session, custom_schema):
 
     df = df.withColumn("fecha_hora", lit(fecha_hora))
     return df
+
+
+def df_to_json(df):
+    return df.toJSON().collect()
