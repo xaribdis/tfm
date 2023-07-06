@@ -25,6 +25,3 @@ if __name__ == "__main__":
     df = read_data(spark_session, custom_schema)
     df.show()
 
-    load_to_redis(df)
-    df_2 = spark_session.read.format("redis").option("table", "last24hour").load()
-    df_2.show()
