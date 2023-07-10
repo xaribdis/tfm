@@ -1,5 +1,7 @@
-from pyspark.sql.functions import lit
+from pyspark.sql.functions import lit, udf, col
 import requests
+import utm
+from pyspark.sql.types import DoubleType
 
 
 # Request the data to the url and save in an xml file
@@ -18,6 +20,15 @@ def get_fecha_hora():
         return xml.readline().split(">", 1)[1].split("<")[0]
 
 
+def utm_to_latlong(df):
+    utm_udf_x = udf(lambda x, y: utm.to_latlon(x, y, 30, 'T')[0].item(), DoubleType())
+    utm_udf_y = udf(lambda x, y: utm.to_latlon(x, y, 30, 'T')[1].item(), DoubleType())
+    df = df.withColumn("latitud", utm_udf_x(col('st_x'), col('st_y')))
+    df = df.withColumn("longitud", utm_udf_y(col('st_x'), col('st_y')))
+    df = df.drop("st_x", "st_y")
+    return df
+
+
 def read_data(spark_session, custom_schema):
     fecha_hora = get_fecha_hora()
 
@@ -28,3 +39,4 @@ def read_data(spark_session, custom_schema):
 
     df = df.withColumn("fecha_hora", lit(fecha_hora))
     return df
+
