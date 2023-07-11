@@ -3,3 +3,6 @@ pyspark==3.3.2
 redis==4.5.5
 structlog==23.1.0
 pymongo==4.4.0
+utm==0.7.0
+plotly~=5.15.0
+dash~=2.11.1

@@ -38,5 +38,6 @@ def read_data(spark_session, custom_schema):
         .load("data/traffic_data.xml", schema=custom_schema)
 
     df = df.withColumn("fecha_hora", lit(fecha_hora))
+    df = utm_to_latlong(df)
     return df
 
