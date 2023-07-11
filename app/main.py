@@ -1,7 +1,7 @@
 from pyspark.sql import SparkSession
 from schemas import traffic_sensor_schema
 from preprocess_data import read_data, utm_to_latlong, request_data
-# from crud import load_to_mongo
+from crud import load_to_mongo
 
 custom_schema = traffic_sensor_schema
 
@@ -14,9 +14,6 @@ def get_spark_session() -> SparkSession:
         .config("spark.mongodb.read.connection.uri", "mongodb://127.0.0.1/myapp.story") \
         .config("spark.mongodb.write.connection.uri", "mongodb://127.0.0.1/myapp.story") \
         .getOrCreate()
-        # .config("spark.redis.port", "6379") \
-        # .config("spark.jars.packages", "com.redislabs:spark-redis:2.3.0") \
-        # .config("spark.redis.host", "localhost") \
 
     logger = spark_session._jvm.org.apache.log4j
     logger.LogManager.getLogger("org").setLevel(logger.Level.FATAL)
