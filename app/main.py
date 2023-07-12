@@ -1,6 +1,6 @@
 from pyspark.sql import SparkSession
 from schemas import traffic_sensor_schema
-from preprocess_data import read_data, utm_to_latlong, request_data
+from spark_process import read_data, utm_to_latlong, request_data
 from crud import load_to_mongo
 
 custom_schema = traffic_sensor_schema
@@ -24,5 +24,5 @@ def df_pipeline():
     request_data()
     spark_session = get_spark_session()
     df = read_data(spark_session, custom_schema)
+    load_to_mongo(df)
     return df.toPandas()
-    # load_to_mongo(df)

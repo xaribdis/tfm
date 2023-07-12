@@ -33,15 +33,11 @@ app.layout = html.Div([
 def display_map(n):
     df = df_pipeline()
 
-    fig = px.scatter_geo(df, "latitud", "longitud", color="intensidad",
-                         color_continuous_scale=px.colors.cyclical.IceFire, hover_data="descripcion")
-
     fig = go.Figure(go.Scattermapbox(
         mode="markers",
-        lat=df['latitud'], lon=df['longitud'],
-        marker=dict(color=df.intensidad, colorscale='icefire', showscale=True)
+        lat=df['latitud'], lon=df['longitud'], hovertext=df[['intensidad', 'descripcion']],
+        marker=dict(color=df.intensidad, colorscale='bluered', showscale=True, cmin=0, cmax=2500)
     ))
-
 
     fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0},
                       mapbox={

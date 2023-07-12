@@ -1,4 +1,4 @@
-from pyspark.sql.functions import lit, udf, col
+from pyspark.sql.functions import lit, udf, col, to_date
 import requests
 import utm
 from pyspark.sql.types import DoubleType
@@ -37,7 +37,7 @@ def read_data(spark_session, custom_schema):
         .options(rowTag='pm') \
         .load("data/traffic_data.xml", schema=custom_schema)
 
-    df = df.withColumn("fecha_hora", lit(fecha_hora))
+    df = df.withColumn("fecha_hora", to_date(lit(fecha_hora), "dd/MM/yyyy HH:mm:ss"))
     df = utm_to_latlong(df)
     return df
 
