@@ -69,9 +69,8 @@ class MongoInitializer:
     # Method to load the districts into database. Not used in the app.
     @staticmethod
     def load_districts(client):
-        if __name__ == "__main__":
-            with open("data/madrid-districts.geojson") as file:
-        geojson = json.loads(file.read())
+        with open("data/madrid-districts.geojson") as file:
+            geojson = json.loads(file.read())
         collection = MongoInitializer.get_collection(client, 'districts')
         collection.create_index([("geometry", pymongo.GEOSPHERE)])
         bulk = []
@@ -82,5 +81,3 @@ class MongoInitializer:
 
     def __str__(self):
         return self.index
-
-
