@@ -26,5 +26,5 @@ def df_pipeline():
     spark_session = get_spark_session()
     df = read_data(spark_session, custom_schema)
     load_to_mongo(df)
-    MongoInitializer()
+    lala = MongoInitializer()
     return df.toPandas()
