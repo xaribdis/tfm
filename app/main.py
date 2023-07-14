@@ -28,3 +28,14 @@ def df_pipeline():
     load_to_mongo(df)
     lala = MongoInitializer()
     return df.toPandas()
+
+
+# if __name__ == "__main__":
+#     spark = get_spark_session()
+
+    # with open('data/madrid-districts.geojson') as file:
+    #     districts = json.load(file)
+    #
+    # districts_df = pd.json_normalize(districts['features'])
+    #
+    # districts_spark.show()

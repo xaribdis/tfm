@@ -1,5 +1,6 @@
 import pymongo
 import structlog
+import json
 
 
 structlog.configure(processors=[structlog.processors.JSONRenderer()])
@@ -15,6 +16,7 @@ def load_to_mongo(df):
 
 class MongoInitializer:
     index = None
+    districts_coll =
 
     def __init__(self):
         if MongoInitializer.index is None:
@@ -64,5 +66,21 @@ class MongoInitializer:
         except Exception as e:
             log.info(e)
 
+    # Method to load the districts into database. Not used in the app.
+    @staticmethod
+    def load_districts(client):
+        if __name__ == "__main__":
+            with open("data/madrid-districts.geojson") as file:
+        geojson = json.loads(file.read())
+        collection = MongoInitializer.get_collection(client, 'districts')
+        collection.create_index([("geometry", pymongo.GEOSPHERE)])
+        bulk = []
+
+        for feature in geojson['features']:
+            bulk.append(pymongo.InsertOne(feature))
+        result = collection.bulk_write(bulk)
+
     def __str__(self):
         return self.index
+
+

@@ -1,7 +1,7 @@
 from pyspark.sql.functions import lit, udf, col, to_date
+from pyspark.sql.types import DoubleType
 import requests
 import utm
-from pyspark.sql.types import DoubleType
 
 
 # Request the data to the url and save in an xml file
