@@ -16,7 +16,6 @@ def load_to_mongo(df):
 
 class MongoInitializer:
     index = None
-    districts_coll =
 
     def __init__(self):
         if MongoInitializer.index is None:
