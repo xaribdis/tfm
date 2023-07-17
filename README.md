@@ -1,4 +1,19 @@
-## Metadata
+## Traffic Streamin App
+App for streamin Madrid traffic data visualization and analysis
+
+### Run the app
+
+```commandline
+python -m venv venv
+python -m pip install requirements
+docker run --name some-mongo -d -p 127.0.0.1:27017:27017/tcp mongo:jammy
+python ./app/app.py
+```
+
+Then you can access the app by entering in 127.0.0.1:8050 in your browser
+
+### Metadata
+
 Datos de tráfico en tiempo real con periodicidad de 5 minutos.
 - **fecha_hora:** Fecha y hora en que se obtuvieron los datos.
 - **idelem:** Identificación del punto de medida.

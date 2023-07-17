@@ -1,5 +1,6 @@
 from pyspark.sql.functions import lit, udf, col, to_date
 from pyspark.sql.types import DoubleType
+from pyspark.sql import SparkSession
 import requests
 import utm
 
@@ -29,7 +30,7 @@ def utm_to_latlong(df):
     return df
 
 
-def read_data(spark_session, custom_schema):
+def read_data(spark_session: SparkSession, custom_schema):
     fecha_hora = get_fecha_hora()
 
     df = spark_session.read \

@@ -25,17 +25,18 @@ def df_pipeline():
     request_data()
     spark_session = get_spark_session()
     df = read_data(spark_session, custom_schema)
-    load_to_mongo(df)
     lala = MongoInitializer()
+    load_to_mongo(df)
     return df.toPandas()
 
 
 # if __name__ == "__main__":
-#     spark = get_spark_session()
 
-    # with open('data/madrid-districts.geojson') as file:
-    #     districts = json.load(file)
+    # spark = get_spark_session()
     #
-    # districts_df = pd.json_normalize(districts['features'])
+    # df = spark.read.format("mongodb").load()
     #
-    # districts_spark.show()
+    # districts = spark.read.format("mongodb")\
+    #     .option("spark.mongodb.read.connection.uri", "mongodb://127.0.0.1/myapp.districts")\
+    #     .load()
+

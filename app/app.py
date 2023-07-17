@@ -22,7 +22,7 @@ app.layout = html.Div([
     dcc.Graph(id="graph"),
     dcc.Interval(
         id='interval-component',
-        interval=30*1000,
+        interval=5*60*1000,
         n_intervals=0
     )
 ])
@@ -47,7 +47,7 @@ def display_map(n):
                               'source': geojson,
                               'type': 'line', 'below': 'traces', 'color': 'blue', 'opacity': 1}]},
                       geo=dict(projection_scale=1000,
-                               center=dict(lat=lat_foc, lon=lon_foc)))
+                           center=dict(lat=lat_foc, lon=lon_foc)))
     return fig
 
 

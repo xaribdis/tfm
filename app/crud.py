@@ -7,6 +7,7 @@ structlog.configure(processors=[structlog.processors.JSONRenderer()])
 log = structlog.getLogger()
 
 
+# TODO Move to config file
 ttl = 3600 * 24 * 30
 
 
@@ -16,14 +17,24 @@ def load_to_mongo(df):
 
 class MongoInitializer:
     index = None
+    # TODO move to config file
+    n_sensors = 4607
 
     def __init__(self):
+        client = self.connect_to_mongo()
+
         if MongoInitializer.index is None:
-            client = self.connect_to_mongo()
+            print('hello there')
             collection = self.get_collection(client, 'story')
-            MongoInitializer.index = self.check_index(collection)['fecha_hora_1']
             self.set_ttl(collection, ttl)
-            client.close()
+            MongoInitializer.index = self.check_index(collection)['fecha_hora_1']
+
+        if new_n_sensors := MongoInitializer.get_n_sensors(client) != MongoInitializer.n_sensors:
+            MongoInitializer.sensor_districts_correspondence(client)
+            MongoInitializer.n_sensors = new_n_sensors
+
+        client.close()
+
 
     @staticmethod
     def connect_to_mongo():
@@ -60,7 +71,7 @@ class MongoInitializer:
     @staticmethod
     def set_ttl(collection, ttl):
         try:
-            # TODO read from config
+            # TODO load from config
             collection.create_index("fecha_hora", expireAfterSeconds=ttl)
         except Exception as e:
             log.info(e)
@@ -78,5 +89,45 @@ class MongoInitializer:
             bulk.append(pymongo.InsertOne(feature))
         result = collection.bulk_write(bulk)
 
+# Method to load a collection with the district in which each sensor is located, bc querying idelem is quicker than
+# doing geospatial queries for each data batch. If new sensors are added, this collection should be updated.
+    @staticmethod
+    def sensor_districts_correspondence(client):
+        districts = MongoInitializer.get_collection(client, 'districts')
+        sensor_districts_collection = MongoInitializer.get_collection(client, 'sensor_districts')
+        sensors = MongoInitializer.get_collection(client, 'story')
+        pipeline = [{"$group":
+                     {"_id": "$idelem",
+                      "latitud": {"$first": "$latitud"},
+                      "longitud": {"$first": "$longitud"}}}]
+        sensor_cursor = sensors.aggregate(pipeline)
+
+        for doc in sensor_cursor:
+            query = {"geometry":
+                     {"$geoIntersects":
+                      {"$geometry":
+                       {"type": "Point",
+                                "coordinates": [doc['longitud'],
+                                                doc['latitud']]
+                        }}}}
+
+            district_cursor = districts.find_one(query)
+            try:
+                sensor_district = district_cursor['properties']['name']
+                sensor_districts_collection.insert_one({"district_name": sensor_district,
+                                                        "_id": doc['_id']})
+            except Exception as e:
+                log.info(e)
+
+    @staticmethod
+    def get_n_sensors(client):
+        sensors = MongoInitializer.get_collection(client, 'story')
+        return len(sensors.distinct("idelem"))
+
     def __str__(self):
         return self.index
+
+
+if __name__ == "__main__":
+    client = MongoInitializer.connect_to_mongo()
+    print(MongoInitializer.get_n_sensors(client))
