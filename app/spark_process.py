@@ -1,6 +1,7 @@
 from pyspark.sql.functions import lit, udf, col, to_date
 from pyspark.sql.types import DoubleType
 from pyspark.sql import SparkSession
+from crud import query_sensor_districts
 import requests
 import utm
 
@@ -30,6 +31,12 @@ def utm_to_latlong(df):
     return df
 
 
+def get_districts(df):
+    districts_udf = udf(lambda x: query_sensor_districts(x))
+    df = df.withColumn("distrito", districts_udf(col('idelem')))
+    return df
+
+
 def read_data(spark_session: SparkSession, custom_schema):
     fecha_hora = get_fecha_hora()
 
@@ -39,6 +46,5 @@ def read_data(spark_session: SparkSession, custom_schema):
         .load("data/traffic_data.xml", schema=custom_schema)
 
     df = df.withColumn("fecha_hora", to_date(lit(fecha_hora), "dd/MM/yyyy HH:mm:ss"))
-    df = utm_to_latlong(df)
     return df
 

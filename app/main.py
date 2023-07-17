@@ -1,6 +1,6 @@
 from pyspark.sql import SparkSession
 from schemas import traffic_sensor_schema
-from spark_process import read_data, utm_to_latlong, request_data
+from spark_process import read_data, utm_to_latlong, request_data, get_districts
 from crud import MongoInitializer, load_to_mongo
 
 custom_schema = traffic_sensor_schema
@@ -22,21 +22,11 @@ def get_spark_session() -> SparkSession:
 
 
 def df_pipeline():
+    mongo_conn = MongoInitializer()
     request_data()
     spark_session = get_spark_session()
     df = read_data(spark_session, custom_schema)
-    lala = MongoInitializer()
+    df = utm_to_latlong(df)
+    df = get_districts(df)
     load_to_mongo(df)
     return df.toPandas()
-
-
-# if __name__ == "__main__":
-
-    # spark = get_spark_session()
-    #
-    # df = spark.read.format("mongodb").load()
-    #
-    # districts = spark.read.format("mongodb")\
-    #     .option("spark.mongodb.read.connection.uri", "mongodb://127.0.0.1/myapp.districts")\
-    #     .load()
-
