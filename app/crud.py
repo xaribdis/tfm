@@ -1,4 +1,5 @@
 import pymongo
+from pymongo.errors import DuplicateKeyError
 import structlog
 import json
 
@@ -16,30 +17,39 @@ def load_to_mongo(df):
 
 
 def query_sensor_districts(idelem: int) -> str:
-    collection = MongoInitializer.get_collection('sensor_districts')
-    query = {"$_id": idelem}
-    return collection.find_one(query)['district_name']
+    client = MongoInitializer.get_mongo_client()
+    collection = MongoInitializer.get_collection(client, 'sensor_districts')
+    try:
+        query = {"_id": idelem}
+        return collection.find_one(query)['district_name']
+    except Exception as e:
+        return "unknown"
 
 
 class MongoInitializer:
-    client = None
-    index = None
+    _client = None
+    _index = None
     # TODO move to config file
-    n_sensors = 4607
+    _n_sensors = 4607
 
-    def __init__(self):
-        if MongoInitializer.client is None:
-            MongoInitializer.client = self.connect_to_mongo()
+    @staticmethod
+    def get_mongo_client():
+        if MongoInitializer._client is None:
+            MongoInitializer._client = MongoInitializer.connect_to_mongo()
 
-        if MongoInitializer.index is None:
-            print('hello there')
-            collection = self.get_collection('story')
-            self.set_ttl(collection, ttl)
-            MongoInitializer.index = self.check_index(collection)['fecha_hora_1']
+        return MongoInitializer._client
 
-        if new_n_sensors := MongoInitializer.get_n_sensors() != MongoInitializer.n_sensors:
-            self.sensor_districts_correspondence()
-            MongoInitializer.n_sensors = new_n_sensors
+    @staticmethod
+    def healthz():
+        client = MongoInitializer.get_mongo_client()
+        if MongoInitializer._index is None:
+            collection = MongoInitializer.get_collection(client, 'story')
+            MongoInitializer.set_ttl(collection, ttl)
+            MongoInitializer._index = MongoInitializer.check_index(collection)['fecha_hora_1']
+
+        if new_n_sensors := MongoInitializer.get_n_sensors(client) != MongoInitializer._n_sensors:
+            MongoInitializer.sensor_districts_correspondence(client)
+            MongoInitializer._n_sensors = new_n_sensors
 
     @staticmethod
     def connect_to_mongo():
@@ -55,9 +65,9 @@ class MongoInitializer:
         return client
 
     @staticmethod
-    def get_collection(col_name):
+    def get_collection(client, col_name):
         try:
-            db = MongoInitializer.client.myapp
+            db = client.myapp
             collection = db[col_name]
             return collection
         except Exception as e:
@@ -84,9 +94,10 @@ class MongoInitializer:
     # Method to load the districts into database. Not used in the app.
     @staticmethod
     def load_districts():
+        client = MongoInitializer.get_mongo_client()
         with open("data/madrid-districts.geojson") as file:
             geojson = json.loads(file.read())
-        collection = MongoInitializer.get_collection('districts')
+        collection = MongoInitializer.get_collection(client, 'districts')
         collection.create_index([("geometry", pymongo.GEOSPHERE)])
         bulk = []
 
@@ -97,10 +108,10 @@ class MongoInitializer:
 # Method to load a collection with the district in which each sensor is located, bc querying idelem is quicker than
 # doing geospatial queries for each data batch. If new sensors are added, this collection should be updated.
     @staticmethod
-    def sensor_districts_correspondence():
-        districts = MongoInitializer.get_collection('districts')
-        sensor_districts_collection = MongoInitializer.get_collection('sensor_districts')
-        sensors = MongoInitializer.get_collection('story')
+    def sensor_districts_correspondence(client):
+        districts = MongoInitializer.get_collection(client, 'districts')
+        sensor_districts_collection = MongoInitializer.get_collection(client, 'sensor_districts')
+        sensors = MongoInitializer.get_collection(client, 'story')
         pipeline = [{"$group":
                      {"_id": "$idelem",
                       "latitud": {"$first": "$latitud"},
@@ -121,13 +132,12 @@ class MongoInitializer:
                 sensor_district = district_cursor['properties']['name']
                 sensor_districts_collection.insert_one({"district_name": sensor_district,
                                                         "_id": doc['_id']})
+            except DuplicateKeyError:
+                continue
             except Exception as e:
                 log.info(e)
 
     @staticmethod
-    def get_n_sensors():
-        sensors = MongoInitializer.get_collection('story')
+    def get_n_sensors(client):
+        sensors = MongoInitializer.get_collection(client, 'story')
         return len(sensors.distinct("idelem"))
-
-    def __str__(self):
-        return self.index
