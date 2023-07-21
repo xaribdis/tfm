@@ -17,8 +17,7 @@ def load_to_mongo(df):
 
 
 def query_sensor_districts(idelem: int) -> str:
-    client = MongoInitializer.get_mongo_client()
-    collection = MongoInitializer.get_collection(client, 'sensor_districts')
+    collection = mongo.get_collection('sensor_districts')
     try:
         query = {"_id": idelem}
         return collection.find_one(query)['district_name']
@@ -32,24 +31,21 @@ class MongoInitializer:
     # TODO move to config file
     _n_sensors = 4607
 
-    @staticmethod
-    def get_mongo_client():
-        if MongoInitializer._client is None:
-            MongoInitializer._client = MongoInitializer.connect_to_mongo()
+    def get_mongo_client(self):
+        if self._client is None:
+            self._client = self.connect_to_mongo()
 
-        return MongoInitializer._client
+        return self._client
 
-    @staticmethod
-    def healthz():
-        client = MongoInitializer.get_mongo_client()
-        if MongoInitializer._index is None:
-            collection = MongoInitializer.get_collection(client, 'story')
-            MongoInitializer.set_ttl(collection, ttl)
-            MongoInitializer._index = MongoInitializer.check_index(collection)['fecha_hora_1']
+    def healthz(self):
+        client = self.get_mongo_client()
+        if self._index is None:
+            self.set_ttl('story', ttl)
+            self._index = self.check_index('story')['fecha_hora_1']
 
-        if new_n_sensors := MongoInitializer.get_n_sensors(client) != MongoInitializer._n_sensors:
-            MongoInitializer.sensor_districts_correspondence(client)
-            MongoInitializer._n_sensors = new_n_sensors
+        if new_n_sensors := self.get_n_sensors() != self._n_sensors:
+            self.sensor_districts_correspondence()
+            self._n_sensors = new_n_sensors
 
     @staticmethod
     def connect_to_mongo():
@@ -64,8 +60,12 @@ class MongoInitializer:
 
         return client
 
-    @staticmethod
-    def get_collection(client, col_name):
+    def close_connection(self):
+        if self._client is not None:
+            self._client.close()
+
+    def get_collection(self, col_name):
+        client = self.get_mongo_client()
         try:
             db = client.myapp
             collection = db[col_name]
@@ -74,30 +74,28 @@ class MongoInitializer:
             log.info(e)
 
     # Check if ttl index exists
-    @staticmethod
-    def check_index(collection):
+    def check_index(self, col_name):
         try:
+            collection = self.get_collection(col_name)
             id_info = collection.index_information()
             return id_info
         except Exception as e:
             log.info(e)
 
     # Function to set the ttl index in collection
-    @staticmethod
-    def set_ttl(collection, ttl):
+    def set_ttl(self, col_name, ttl):
         try:
             # TODO load from config
+            collection = self.get_collection(col_name)
             collection.create_index("fecha_hora", expireAfterSeconds=ttl)
         except Exception as e:
             log.info(e)
 
     # Method to load the districts into database. Not used in the app.
-    @staticmethod
-    def load_districts():
-        client = MongoInitializer.get_mongo_client()
+    def load_districts(self):
         with open("data/madrid-districts.geojson") as file:
             geojson = json.loads(file.read())
-        collection = MongoInitializer.get_collection(client, 'districts')
+        collection = self.get_collection('districts')
         collection.create_index([("geometry", pymongo.GEOSPHERE)])
         bulk = []
 
@@ -107,11 +105,10 @@ class MongoInitializer:
 
 # Method to load a collection with the district in which each sensor is located, bc querying idelem is quicker than
 # doing geospatial queries for each data batch. If new sensors are added, this collection should be updated.
-    @staticmethod
-    def sensor_districts_correspondence(client):
-        districts = MongoInitializer.get_collection(client, 'districts')
-        sensor_districts_collection = MongoInitializer.get_collection(client, 'sensor_districts')
-        sensors = MongoInitializer.get_collection(client, 'story')
+    def sensor_districts_correspondence(self):
+        districts = self.get_collection('districts')
+        sensor_districts_collection = self.get_collection('sensor_districts')
+        sensors = self.get_collection('story')
         pipeline = [{"$group":
                      {"_id": "$idelem",
                       "latitud": {"$first": "$latitud"},
@@ -137,7 +134,11 @@ class MongoInitializer:
             except Exception as e:
                 log.info(e)
 
-    @staticmethod
-    def get_n_sensors(client):
-        sensors = MongoInitializer.get_collection(client, 'story')
+    def get_n_sensors(self):
+        sensors = self.get_collection('story')
         return len(sensors.distinct("idelem"))
+
+
+mongo = MongoInitializer()
+mongo.get_mongo_client()
+print(mongo.get_mongo_client())

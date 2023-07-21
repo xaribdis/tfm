@@ -1,12 +1,12 @@
 from pyspark.sql import SparkSession
 from schemas import traffic_sensor_schema
 from spark_process import read_data, utm_to_latlong, request_data, get_districts
-from crud import MongoInitializer as mi
-from crud import load_to_mongo
+from crud import load_to_mongo, mongo
 
 custom_schema = traffic_sensor_schema
 
 
+# Get or create SparkSession with needed packages for mongo and xml
 def get_spark_session() -> SparkSession:
     # TODO load from config
     spark_session = SparkSession \
@@ -23,12 +23,14 @@ def get_spark_session() -> SparkSession:
     return spark_session
 
 
+# Read, preprocess and load data to mongo, and check everything is correct in database
 def df_pipeline():
     request_data()
     spark_session = get_spark_session()
+    mongo.get_mongo_client()
     df = read_data(spark_session, custom_schema)
     df = utm_to_latlong(df)
     df = get_districts(df)
-    mi.healthz()
+    mongo.healthz()
     load_to_mongo(df)
-    return df.toPandas()
+    return df

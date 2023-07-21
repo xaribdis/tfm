@@ -1,6 +1,6 @@
 from pyspark.sql.functions import lit, udf, col, to_date
 from pyspark.sql.types import DoubleType
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, DataFrame
 from crud import query_sensor_districts
 import requests
 import utm
@@ -22,7 +22,7 @@ def get_fecha_hora():
         return xml.readline().split(">", 1)[1].split("<")[0]
 
 
-def utm_to_latlong(df):
+def utm_to_latlong(df: DataFrame) -> DataFrame:
     utm_udf_x = udf(lambda x, y: utm.to_latlon(x, y, 30, 'T')[0].item(), DoubleType())
     utm_udf_y = udf(lambda x, y: utm.to_latlon(x, y, 30, 'T')[1].item(), DoubleType())
     df = df.withColumn("latitud", utm_udf_x(col('st_x'), col('st_y')))
@@ -31,13 +31,13 @@ def utm_to_latlong(df):
     return df
 
 
-def get_districts(df):
+def get_districts(df: DataFrame) -> DataFrame:
     districts_udf = udf(lambda x: query_sensor_districts(x))
     df = df.withColumn("distrito", districts_udf(col('idelem')))
     return df
 
 
-def read_data(spark_session: SparkSession, custom_schema):
+def read_data(spark_session: SparkSession, custom_schema) -> DataFrame:
     fecha_hora = get_fecha_hora()
 
     df = spark_session.read \
@@ -48,3 +48,14 @@ def read_data(spark_session: SparkSession, custom_schema):
     df = df.withColumn("fecha_hora", to_date(lit(fecha_hora), "dd/MM/yyyy HH:mm:ss"))
     return df
 
+
+def agg_districts(df: DataFrame) -> DataFrame:
+    return df.groupBy('distrito').avg('intensidad')
+
+
+def field_larger_than(df: DataFrame, field: str, threshold: int) -> DataFrame:
+    return df.filter(col(field) > threshold)
+
+
+def field_less_than(df: DataFrame, field: str, threshold: int) -> DataFrame:
+    return df.filter(col(field) < threshold)
