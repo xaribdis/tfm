@@ -19,8 +19,14 @@ lon_foc = -3.686722
 
 server = app.server
 
+"""Homepage"""
 app.layout = html.Div([
-    html.H1(children='Title of Dash App', style={'textAlign': 'center'}),
+    dcc.Location(id='url', refresh=False),
+    html.Div(id='page-content'),
+])
+
+index_page = html.Div([
+    html.H1(children='Homepage', style={'textAlign': 'center'}),
     dcc.Graph(id="graph"),
     dcc.Interval(
         id='interval-component',
@@ -54,14 +60,23 @@ def display_map(n):
     #                   geo=dict(projection_scale=1000,
     #                            center=dict(lat=lat_foc, lon=lon_foc)))
 
-    fig = px.choropleth_mapbox(district_agg, geojson=geojson, mapbox_style="open-street-map",
-                                  color='avg(intensidad)', locations='distrito', featureidkey='properties.name',
-                                  color_continuous_scale='viridis', opacity=0.4, center={'lat': lat_foc, 'lon': lon_foc}, zoom=10)
+    fig = px.choropleth_mapbox(district_agg, geojson=geojson, mapbox_style="open-street-map", color='avg(intensidad)',
+                               locations='distrito', featureidkey='properties.name', color_continuous_scale='viridis',
+                               opacity=0.4, center={'lat': lat_foc, 'lon': lon_foc}, zoom=10)
 
     fig.add_trace(fig_go.data[0])
     # fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 
     return fig
+
+
+@app.callback(Output('page-content', 'children'),
+              [Input('url', 'pathname')])
+def display_page(pathname):
+    if pathname == "/district":
+        pass
+    else:
+        return index_page
 
 
 if __name__ == "__main__":
