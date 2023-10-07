@@ -39,6 +39,7 @@ def get_districts(df: DataFrame) -> DataFrame:
 
 def read_data(spark_session: SparkSession, custom_schema) -> DataFrame:
     fecha_hora = get_fecha_hora()
+    print('FECHA_HORA:', fecha_hora)
 
     df = spark_session.read \
         .format('xml') \
@@ -51,6 +52,11 @@ def read_data(spark_session: SparkSession, custom_schema) -> DataFrame:
 
 def agg_districts(df: DataFrame) -> DataFrame:
     return df.groupBy('distrito').avg('intensidad')
+
+
+def agg_subzones_of_district(df: DataFrame, district: str) -> DataFrame:
+    df = df.filter(col('distrito') == district)
+    return df.groupBy('subzona').avg('carga')
 
 
 def field_larger_than(df: DataFrame, field: str, threshold: int) -> DataFrame:
