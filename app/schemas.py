@@ -16,10 +16,10 @@ traffic_sensor_schema = StructType([
     StructField("st_y", DoubleType(), True)
 ])
 
-story_data_schema = StructType([
+historic_data_schema = StructType([
     StructField("idelem", IntegerType(), False),
     StructField("carga", IntegerType(), True),
     StructField("distrito", StringType(), True),
-    StructField("fecha_hora", TimestampType, True)
+    StructField("fecha_hora", TimestampType(), True)
 ])
 

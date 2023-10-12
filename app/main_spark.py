@@ -14,8 +14,8 @@ def get_spark_session() -> SparkSession:
         .builder \
         .config("spark.jars.packages", "com.databricks:spark-xml_2.12:0.13.0") \
         .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.12:10.1.1") \
-        .config("spark.mongodb.read.connection.uri", "mongodb://127.0.0.1/myapp.story") \
-        .config("spark.mongodb.write.connection.uri", "mongodb://127.0.0.1/myapp.story") \
+        .config("spark.mongodb.read.connection.uri", "mongodb://127.0.0.1/myapp.historic") \
+        .config("spark.mongodb.write.connection.uri", "mongodb://127.0.0.1/myapp.historic") \
         .config("spark.submit.pyFiles", "app/crud.py") \
         .getOrCreate()
 
@@ -25,9 +25,9 @@ def get_spark_session() -> SparkSession:
 
 
 # Read, preprocess and load data to mongo, and check everything is correct in database
-def df_pipeline():
+def df_pipeline(spark_session: SparkSession):
     request_data()
-    spark_session = get_spark_session()
+    # spark_session = get_spark_session()
     mongo.get_mongo_client()
     df = read_data(spark_session, custom_schema)
     df = utm_to_latlong(df)
@@ -37,7 +37,7 @@ def df_pipeline():
     return df
 
 
-# if __name__ == "__main__":
-#     df = df_pipeline()
-#     filtered_df = agg_subzones_of_district(df, 'Arganzuela')
-#     filtered_df.show()
+if __name__ == "__main__":
+    spark_session = get_spark_session()
+    df = df_pipeline(spark_session)
+    df.toPandas()

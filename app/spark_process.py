@@ -1,4 +1,4 @@
-from pyspark.sql.functions import lit, udf, col, to_date
+from pyspark.sql.functions import lit, udf, col, to_timestamp
 from pyspark.sql.types import DoubleType
 from pyspark.sql import SparkSession, DataFrame
 from crud import query_sensor_districts
@@ -16,12 +16,14 @@ def request_data():
     r.close()
 
 
+# Get date and hour from xml header
 def get_fecha_hora():
     with open("data/traffic_data.xml", encoding="utf-8") as xml:
         xml.readline()
         return xml.readline().split(">", 1)[1].split("<")[0]
 
 
+# Convert utm coordinates to latitude/longitude
 def utm_to_latlong(df: DataFrame) -> DataFrame:
     utm_udf_x = udf(lambda x, y: utm.to_latlon(x, y, 30, 'T')[0].item(), DoubleType())
     utm_udf_y = udf(lambda x, y: utm.to_latlon(x, y, 30, 'T')[1].item(), DoubleType())
@@ -37,25 +39,35 @@ def get_districts(df: DataFrame) -> DataFrame:
     return df
 
 
+# Read data from xml file into dataframe
 def read_data(spark_session: SparkSession, custom_schema) -> DataFrame:
     fecha_hora = get_fecha_hora()
-    print('FECHA_HORA:', fecha_hora)
+    # print('FECHA_HORA:', fecha_hora)
 
     df = spark_session.read \
         .format('xml') \
         .options(rowTag='pm') \
         .load("data/traffic_data.xml", schema=custom_schema)
 
-    df = df.withColumn("fecha_hora", to_date(lit(fecha_hora), "dd/MM/yyyy HH:mm:ss"))
+    df = df.withColumn("fecha_hora", to_timestamp(lit(fecha_hora), "dd/MM/yyyy HH:mm:ss"))
     return df
+
+
+# Retrieve historic data from mongo into a dataframe
+def get_historic_data_df(spark_session: SparkSession, custom_schema) -> DataFrame:
+    return spark_session.read.format('mongodb').load(schema=custom_schema)
 
 
 def agg_districts(df: DataFrame) -> DataFrame:
     return df.groupBy('distrito').avg('intensidad')
 
 
-def agg_subzones_of_district(df: DataFrame, district: str) -> DataFrame:
+def filter_district(df: DataFrame, district: str) -> DataFrame:
     df = df.filter(col('distrito') == district)
+
+
+def agg_subzones_of_district(df: DataFrame, district: str) -> DataFrame:
+    filtered_df = filter_district(df, district)
     return df.groupBy('subarea').avg('carga')
 
 

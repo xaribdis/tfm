@@ -1,21 +1,26 @@
+import pandas as pd
 from dash import Dash, html, dcc, callback, Output, Input
 import dash_bootstrap_components as dbc
+from pyspark.sql.types import StringType
 import json
 import plotly.graph_objects as go
 import plotly.express as px
-from main_spark import df_pipeline
-from spark_process import field_larger_than, agg_districts, agg_subzones_of_district
+
+from main_spark import df_pipeline, get_spark_session
+from spark_process import field_larger_than, agg_districts, agg_subzones_of_district, get_historic_data_df, filter_district
 from crud import mongo
 import layout as lo
-import constants as c
+from schemas import historic_data_schema
+from constants import GEOJSON_FILE
 
 
-app = Dash(external_stylesheets=[dbc.themes.DARKLY])
+spark_session = get_spark_session()
+app = Dash(external_stylesheets=[dbc.themes.DARKLY], suppress_callback_exceptions=True)
 
-df = df_pipeline() # Dataframe for the incoming data
-# temp_series_df = temp_series() # Dataframe for the historic data
+df = df_pipeline(spark_session)  # Dataframe for the incoming data
+temp_series_df = get_historic_data_df(spark_session, historic_data_schema)  # Dataframe for the historic data
 
-geojsonfile = c.GEOJSON_FILE
+geojsonfile = GEOJSON_FILE
 with open(geojsonfile) as file:
     geojson = json.load(file)
 
@@ -51,8 +56,10 @@ district_layout = lo.set_district_layout()
 @app.callback(Output("map", "figure"), Input('interval-component', 'n_intervals'))
 def display_map(n_intervals):
     global df
-    df = df_pipeline()
-    filtered_df = field_larger_than(df, 'nivelServicio', 1).toPandas()
+    df = df_pipeline(spark_session)
+    filtered_df = field_larger_than(df, 'nivelServicio', 1)
+    filtered_df = df.withColumn("fecha_hora", df["fecha_hora"].cast(StringType())).toPandas()
+    filtered_df["fecha_hora"] = pd.to_datetime(filtered_df["fecha_hora"], format="%Y-%m-%d %H:%M:%S")
 
     lat_foc = 40.42532
     lon_foc = -3.686722
@@ -81,10 +88,10 @@ def plot_subzones_bar(district):
     return fig
 
 
-@app.callback(Output('subzones-bar', 'figure'), [Input('district-dropdown', 'value')])
+@app.callback(Output('temp-series', 'figure'), [Input('district-dropdown', 'value')])
 def plot_temp_series(district):
-    filtered_df = df.filter(district).toPandas()
-    filtered_df.sort_index()
+    filtered_df = filter_district(temp_series_df, district)
+    # filtered_df.sort_index()
     fig = px.bar(filtered_df, x='subarea', y='carga')
     return fig
 

@@ -2,7 +2,7 @@ import pymongo
 from pymongo.errors import DuplicateKeyError
 import structlog
 import json
-import constants as c
+# from constants import temp_series_projection
 
 
 structlog.configure(processors=[structlog.processors.JSONRenderer()])
@@ -26,14 +26,14 @@ def query_sensor_districts(idelem: int) -> str:
         return "unknown"
 
 
-def query_district_story(district: str):
-    collection = mongo.get_collection('story')
-    projection = c.temp_series_projection
-    try:
-        query = {"distrito": district}
-        return collection.find(query, projection)
-    except Exception as e:
-        print(e)
+# def query_district_historic(district: str):
+#     projection = c.temp_series_projection
+#     collection = mongo.get_collection('historic')
+#     try:
+#         query = {"distrito": district}
+#         return collection.find(query, projection)
+#     except Exception as e:
+#         print(e)
 
 
 class MongoInitializer:
@@ -51,8 +51,8 @@ class MongoInitializer:
     def healthz(self):
         client = self.get_mongo_client()
         if self._index is None:
-            self.set_ttl('story', ttl)
-            self._index = self.check_index('story')['fecha_hora_1']
+            self.set_ttl('historic', ttl)
+            self._index = self.check_index('historic')['fecha_hora_1']
 
         if new_n_sensors := self.get_n_sensors() != self._n_sensors:
             self.sensor_districts_correspondence()
@@ -119,7 +119,7 @@ class MongoInitializer:
     def sensor_districts_correspondence(self):
         districts = self.get_collection('districts')
         sensor_districts_collection = self.get_collection('sensor_districts')
-        sensors = self.get_collection('story')
+        sensors = self.get_collection('historic')
         pipeline = [{"$group":
                      {"_id": "$idelem",
                       "latitud": {"$first": "$latitud"},
@@ -146,10 +146,10 @@ class MongoInitializer:
                 log.info(e)
 
     def get_n_sensors(self):
-        sensors = self.get_collection('story')
+        sensors = self.get_collection('historic')
         return len(sensors.distinct("idelem"))
 
 
 mongo = MongoInitializer()
 mongo.get_mongo_client()
-print(mongo.get_mongo_client())
+# print(mongo.get_mongo_client())
