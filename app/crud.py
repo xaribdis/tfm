@@ -2,6 +2,7 @@ import pymongo
 from pymongo.errors import DuplicateKeyError
 import structlog
 import json
+import constants as c
 
 
 structlog.configure(processors=[structlog.processors.JSONRenderer()])
@@ -23,6 +24,16 @@ def query_sensor_districts(idelem: int) -> str:
         return collection.find_one(query)['district_name']
     except Exception as e:
         return "unknown"
+
+
+def query_district_story(district: str):
+    collection = mongo.get_collection('story')
+    projection = c.temp_series_projection
+    try:
+        query = {"distrito": district}
+        return collection.find(query, projection)
+    except Exception as e:
+        print(e)
 
 
 class MongoInitializer:

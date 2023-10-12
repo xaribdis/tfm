@@ -53,3 +53,5 @@ dmypy.json
 
 # data
 *.xml
+iris.json
+lala.ipynb

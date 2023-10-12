@@ -7,12 +7,15 @@ from main_spark import df_pipeline
 from spark_process import field_larger_than, agg_districts, agg_subzones_of_district
 from crud import mongo
 import layout as lo
+import constants as c
+
 
 app = Dash(external_stylesheets=[dbc.themes.DARKLY])
 
-df = df_pipeline()
+df = df_pipeline() # Dataframe for the incoming data
+# temp_series_df = temp_series() # Dataframe for the historic data
 
-geojsonfile = "data/madrid-districts.geojson"
+geojsonfile = c.GEOJSON_FILE
 with open(geojsonfile) as file:
     geojson = json.load(file)
 
@@ -21,6 +24,13 @@ server = app.server
 """Homepage"""
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
+    dbc.Row([
+        dbc.Col(
+            html.Div(lo.BUTTON_LAYOUT), width=4),
+        dbc.Col(width=7),
+    ], justify='center'),
+    html.Br(),
+    html.Br(),
     html.Div(id='page-content'),
 ])
 
@@ -63,17 +73,26 @@ def display_map(n_intervals):
     return fig
 
 
-@app.callback(Output('temp-series', 'figure'), [Input('district-dropdown', 'value')])
-def plot_histogram(district):
+@app.callback(Output('subzones-bar', 'figure'), [Input('district-dropdown', 'value')])
+def plot_subzones_bar(district):
     filtered_df = agg_subzones_of_district(df, district).toPandas()
-    fig = px.histogram(filtered_df)
-    return None
+    filtered_df.sort_index()
+    fig = px.bar(filtered_df, x='subarea', y='carga')
+    return fig
+
+
+@app.callback(Output('subzones-bar', 'figure'), [Input('district-dropdown', 'value')])
+def plot_temp_series(district):
+    filtered_df = df.filter(district).toPandas()
+    filtered_df.sort_index()
+    fig = px.bar(filtered_df, x='subarea', y='carga')
+    return fig
 
 
 @app.callback(Output('page-content', 'children'), [Input('url', 'pathname')])
 def display_page(pathname):
-    if pathname == "/district":
-        pass
+    if pathname == "/districts":
+        return district_layout
     else:
         return index_page
 

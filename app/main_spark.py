@@ -2,6 +2,7 @@ from pyspark.sql import SparkSession
 from schemas import traffic_sensor_schema
 from spark_process import read_data, utm_to_latlong, request_data, get_districts
 from crud import load_to_mongo, mongo
+from spark_process import field_larger_than, agg_districts, agg_subzones_of_district
 
 custom_schema = traffic_sensor_schema
 
@@ -34,3 +35,9 @@ def df_pipeline():
     mongo.healthz()
     load_to_mongo(df)
     return df
+
+
+# if __name__ == "__main__":
+#     df = df_pipeline()
+#     filtered_df = agg_subzones_of_district(df, 'Arganzuela')
+#     filtered_df.show()

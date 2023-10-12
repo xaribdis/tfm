@@ -17,19 +17,13 @@ BUTTON_LAYOUT = [
 ]
 
 
-def set_district_layout(district: str, date: str):
+def set_district_layout():
     layout = html.Div([
-        html.Div(id=f'{district}-details'),
-        html.Br(),
-        dbc.Row([
-            dbc.Col(
-                html.Div(BUTTON_LAYOUT), width=4),
-            dbc.Col(width=7),
-        ], justify='center'),
+        html.Div(id=f'details'),
         html.Br(),
         html.Br(),
         dbc.Row([
-            dbc.Col(html.H1(district), width=9),
+            dbc.Col(html.H1('Districts'), width=9),
             dbc.Col(width=2),
         ], justify='center'),
         html.Br(),
@@ -39,25 +33,26 @@ def set_district_layout(district: str, date: str):
                 dcc.Dropdown(
                     id='district-dropdown',
                     options=[{'label': district, 'value': district} for district in districts],
+                    value=['Arganzuela']
                 ), width=6
             ),
             dbc.Col(width=5),
         ], justify='center'),
-        dcc.Graph(id=f'{district}-temp-series'),
+        dcc.Graph(id='temp-series'),
         html.Br(),
         html.Br(),
         dbc.Row([
             dbc.Col(
                 html.Div([
-                    dcc.Graph(figure="""TODO display_map()""")
+                    dcc.Graph(id='district-map')
                 ]), width=4),
             dbc.Col(
                 html.Div([
-                    dcc.Graph(figure="""TODO plot_histogram()""")
+                    dcc.Graph(id='subzones-bar')
                 ]), width=4),
             dbc.Col(
                 html.Div([
-                    dcc.Graph(figure="""TODO plot_()""")
+                    dcc.Graph(id='some-plot')
                 ]), width=4),
         ]),
     ])

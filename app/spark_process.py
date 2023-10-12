@@ -56,7 +56,7 @@ def agg_districts(df: DataFrame) -> DataFrame:
 
 def agg_subzones_of_district(df: DataFrame, district: str) -> DataFrame:
     df = df.filter(col('distrito') == district)
-    return df.groupBy('subzona').avg('carga')
+    return df.groupBy('subarea').avg('carga')
 
 
 def field_larger_than(df: DataFrame, field: str, threshold: int) -> DataFrame:
