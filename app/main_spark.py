@@ -1,10 +1,10 @@
 from pyspark.sql import SparkSession
-from schemas import traffic_sensor_schema
-from spark_process import read_data, utm_to_latlong, request_data, get_districts
+from schemas import traffic_sensor_schema, historic_data_schema
+from spark_process import read_data, utm_to_latlong, request_data, get_districts, cast_to_datetime
 from crud import load_to_mongo, mongo
-from spark_process import field_larger_than, agg_districts, agg_subzones_of_district
-
-custom_schema = traffic_sensor_schema
+from spark_process import field_larger_than, agg_districts, agg_subzones_of_district_by_time
+from pyspark.sql.types import StringType
+from spark_process import get_historic_data_df, filter_district
 
 
 # Get or create SparkSession with needed packages for mongo and xml
@@ -29,7 +29,7 @@ def df_pipeline(spark_session: SparkSession):
     request_data()
     # spark_session = get_spark_session()
     mongo.get_mongo_client()
-    df = read_data(spark_session, custom_schema)
+    df = read_data(spark_session, traffic_sensor_schema)
     df = utm_to_latlong(df)
     df = get_districts(df)
     mongo.healthz()
@@ -40,4 +40,13 @@ def df_pipeline(spark_session: SparkSession):
 if __name__ == "__main__":
     spark_session = get_spark_session()
     df = df_pipeline(spark_session)
-    df.toPandas()
+    filtered_df = field_larger_than(df, 'nivelServicio', 1)
+    filtered_df.show()
+    filtered_df = cast_to_datetime(filtered_df)
+    print(filtered_df)
+
+    # df.groupBy('distrito', 'subarea').count().groupby('distrito').count().show()
+    # df = get_historic_data_df(spark_session, historic_data_schema)
+    # filtered_df = agg_subzones_of_district_by_time(df, 'Arganzuela')
+    # filtered_df = filtered_df.withColumn("fecha_hora", filtered_df["fecha_hora"].cast(StringType())).toPandas()
+    # print(filtered_df.pivot(index='fecha_hora', columns='subarea', values='avg(carga)'))

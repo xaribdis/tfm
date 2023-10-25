@@ -1,6 +1,8 @@
 from pyspark.sql.functions import lit, udf, col, to_timestamp
-from pyspark.sql.types import DoubleType
+from pyspark.sql.types import DoubleType, StringType
 from pyspark.sql import SparkSession, DataFrame
+import pandas as pd
+
 from crud import query_sensor_districts
 import requests
 import utm
@@ -63,12 +65,24 @@ def agg_districts(df: DataFrame) -> DataFrame:
 
 
 def filter_district(df: DataFrame, district: str) -> DataFrame:
-    df = df.filter(col('distrito') == district)
+    return df.filter(col('distrito') == district)
 
 
 def agg_subzones_of_district(df: DataFrame, district: str) -> DataFrame:
     filtered_df = filter_district(df, district)
     return df.groupBy('subarea').avg('carga')
+
+
+def agg_subzones_of_district_by_time(df: DataFrame, district: str) -> DataFrame:
+    filtered_df = filter_district(df, district)
+    return filtered_df.groupBy('subarea', 'fecha_hora').avg('carga')
+
+
+# Since Spark 3.3, TimestampType is not compatible with datetime from pandas so I have to do this stupid transformation
+def cast_to_datetime(df):
+    casted_df = df.withColumn("fecha_hora", df["fecha_hora"].cast(StringType())).toPandas()
+    casted_df["fecha_hora"] = pd.to_datetime(casted_df["fecha_hora"], format="%Y-%m-%d %H:%M:%S")
+    return casted_df
 
 
 def field_larger_than(df: DataFrame, field: str, threshold: int) -> DataFrame:

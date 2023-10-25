@@ -7,7 +7,8 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 from main_spark import df_pipeline, get_spark_session
-from spark_process import field_larger_than, agg_districts, agg_subzones_of_district, get_historic_data_df, filter_district
+from spark_process import field_larger_than, agg_districts, agg_subzones_of_district, get_historic_data_df
+from spark_process import filter_district, agg_subzones_of_district_by_time, cast_to_datetime
 from crud import mongo
 import layout as lo
 from schemas import historic_data_schema
@@ -58,8 +59,8 @@ def display_map(n_intervals):
     global df
     df = df_pipeline(spark_session)
     filtered_df = field_larger_than(df, 'nivelServicio', 1)
-    filtered_df = df.withColumn("fecha_hora", df["fecha_hora"].cast(StringType())).toPandas()
-    filtered_df["fecha_hora"] = pd.to_datetime(filtered_df["fecha_hora"], format="%Y-%m-%d %H:%M:%S")
+    filtered_df = cast_to_datetime(filtered_df)
+    print(filtered_df)
 
     lat_foc = 40.42532
     lon_foc = -3.686722
@@ -90,9 +91,10 @@ def plot_subzones_bar(district):
 
 @app.callback(Output('temp-series', 'figure'), [Input('district-dropdown', 'value')])
 def plot_temp_series(district):
-    filtered_df = filter_district(temp_series_df, district)
-    # filtered_df.sort_index()
-    fig = px.bar(filtered_df, x='subarea', y='carga')
+    filtered_df = agg_subzones_of_district_by_time(df, district)
+    filtered_df = cast_to_datetime(filtered_df)
+    filtered_df.pivot(index='fecha_hora', columns='subarea', values='avg(carga)')
+    fig = px.line(filtered_df, x='fecha_hora', y='carga',)
     return fig
 
 
