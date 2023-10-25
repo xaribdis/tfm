@@ -5,6 +5,7 @@ from pyspark.sql.types import StringType
 import json
 import plotly.graph_objects as go
 import plotly.express as px
+import structlog
 
 from main_spark import df_pipeline, get_spark_session
 from spark_process import field_larger_than, agg_districts, agg_subzones_of_district, get_historic_data_df
@@ -14,6 +15,8 @@ import layout as lo
 from schemas import historic_data_schema
 from constants import GEOJSON_FILE
 
+structlog.configure(processors=[structlog.processors.JSONRenderer()])
+log = structlog.getLogger()
 
 spark_session = get_spark_session()
 app = Dash(external_stylesheets=[dbc.themes.DARKLY], suppress_callback_exceptions=True)
@@ -37,6 +40,7 @@ app.layout = html.Div([
     ], justify='center'),
     html.Br(),
     html.Br(),
+    html.Div(id='hidden-div', style={'display': 'none'}),
     html.Div(id='page-content'),
 ])
 
@@ -54,13 +58,19 @@ index_page = html.Div([
 district_layout = lo.set_district_layout()
 
 
-@app.callback(Output("map", "figure"), Input('interval-component', 'n_intervals'))
+@app.callback(Output("hidden-div", "children"), Input('interval-component', 'n_intervals'))
 def display_map(n_intervals):
     global df
     df = df_pipeline(spark_session)
+    return {}
+
+
+@app.callback(Output("map", "figure"), Input('interval-component', 'n_intervals'))
+def display_map(n_intervals):
+    # global df
+    # df = df_pipeline(spark_session)
     filtered_df = field_larger_than(df, 'nivelServicio', 1)
     filtered_df = cast_to_datetime(filtered_df)
-    print(filtered_df)
 
     lat_foc = 40.42532
     lon_foc = -3.686722
