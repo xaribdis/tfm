@@ -70,7 +70,7 @@ def filter_district(df: DataFrame, district: str) -> DataFrame:
 
 def agg_subzones_of_district(df: DataFrame, district: str) -> DataFrame:
     filtered_df = filter_district(df, district)
-    return df.groupBy('subarea').avg('carga')
+    return filtered_df.groupBy('subarea').avg('carga')
 
 
 def agg_subzones_of_district_by_time(df: DataFrame, district: str) -> DataFrame:

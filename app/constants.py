@@ -1,6 +1,24 @@
-districts = ['Arganzuela', 'Barajas', 'Carabanchel', 'Centro', 'Chamartin', 'Chamberi', 'Ciudad Lineal',
-             'Fuencarral-El Pardo', 'Hortaleza', 'Latina', 'Moncloa-Aravaca', 'Moratalaz', 'Puente de Vallecas',
-             'Retiro', 'Salamanca', 'San Blas', 'Tetuan', 'Usera', 'Vicalvaro', 'Villa de Vallecas', 'Villaverde']
+districts = {'Arganzuela': [-3.6977073720303224, 40.39696549068384],
+             'Barajas': [ -3.5798445416938307, 40.47426260285562],
+             'Carabanchel': [-3.7450019525130926, 40.37421297195493],
+             'Centro': [-3.7450019525130926, 40.37421297195493],
+             'Chamartin': [-3.6761647124896797, 40.45884516797494],
+             'Chamberi': [-3.705624553016122, 40.4389269183163],
+             'Ciudad Lineal': [-3.6511046331729915, 40.448498837010845],
+             'Fuencarral-El Pardo': [-3.6924088198917957, 40.497230174061485],
+             'Hortaleza': [-3.6436170484341517, 40.47253959492912],
+             'Latina': [-3.7366958787908118, 40.40379531504183],
+             'Moncloa-Aravaca': [-3.749754866885297, 40.4312012601919],
+             'Moratalaz': [-3.6450034600497077, 40.405914222890345],
+             'Puente de Vallecas': [-3.6584853901355245, 40.386515584691296],
+             'Retiro': [-3.6760182341180325, 40.41108711730982],
+             'Salamanca': [-3.681145256622216, 40.42714647084156],
+             'San Blas': [ -3.6205617333341706, 40.4353935944126],
+             'Tetuan': [-3.698580766994951, 40.46077102857467],
+             'Usera': [-3.707024057787578, 40.38390299292067],
+             'Vicalvaro': [-3.5964440033652636, 40.4020033833267],
+             'Villa de Vallecas': [-3.6220842669656577, 40.37674567380975],
+             'Villaverde': [-3.6977774986072234, 40.34567971812692]}
 
 GEOJSON_FILE = "data/madrid-districts.geojson"
 

@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 from constants import districts
 
 TEMPLATE = 'plotly_dark'
+config = {"displayModeBar": False}
 
 BUTTON_LAYOUT = [
     dcc.Link(
@@ -32,27 +33,30 @@ def set_district_layout():
             dbc.Col(
                 dcc.Dropdown(
                     id='district-dropdown',
-                    options=[{'label': district, 'value': district} for district in districts],
-                    value=['Arganzuela']
+                    options=[{'label': district, 'value': district} for district in districts.keys()],
+                    value='Arganzuela'
                 ), width=6
             ),
             dbc.Col(width=5),
         ], justify='center'),
-        dcc.Graph(id='temp-series'),
+        dcc.Graph(id='temp-series',
+                  config=config),
         html.Br(),
         html.Br(),
         dbc.Row([
             dbc.Col(
                 html.Div([
-                    dcc.Graph(id='district-map')
+                    dcc.Graph(id='district-map',
+                              config=config)
                 ]), width=4),
             dbc.Col(
                 html.Div([
-                    dcc.Graph(id='subzones-bar')
+                    dcc.Graph(id='subzones-bar',
+                              config=config)
                 ]), width=4),
             dbc.Col(
                 html.Div([
-                    dcc.Graph(id='some-plot')
+                    dcc.Graph(id='some-plot',config=config)
                 ]), width=4),
         ]),
     ])
