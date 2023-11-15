@@ -1,23 +1,28 @@
-FROM apache/spark-py:v3.3.2
+# FROM apache/spark-py:v3.3.2
+FROM python:3.12-alpine
 
 WORKDIR /code
 
-COPY ./requirements.txt /code/requirements.txt
+RUN mkdir -p ./data
+
+# COPY /spark/jars /spark/jars
+
+COPY /requirements.txt .
 
 USER root
 
-RUN groupadd -r apache -g 433 && \
-    useradd -u 431 -r -g apache -s /sbin/nologin -c "Docker image user" apache
+# RUN groupadd -r apache -g 433 && \
+#     useradd -u 431 -r -g apache -s /sbin/nologin -c "Docker image user" apache
 
-RUN pip install --no-cache-dir --upgrade --user -r /code/requirements.txt
+RUN pip install --no-cache-dir --upgrade --user -r requirements.txt
 
-RUN mkdir -p /code/data
+COPY ./data/madrid-districts.geojson ./data/madrid-districts.geojson
 
-COPY ./data/madrid-districts.geojson /code/data/madrid-districts.geojson
-COPY ./app /code/app
+COPY ./app ./app
 
 EXPOSE 8050
 
-USER apache
+# USER apache
+RUN pwd
 
-CMD ["python", "/code/app.py"]
+CMD ["python", "app/app.py"]
