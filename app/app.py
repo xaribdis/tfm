@@ -1,29 +1,30 @@
 from dash import Dash, html, dcc, callback, Output, Input, State
 import dash_bootstrap_components as dbc
-from pyspark.sql.types import StringType
+# from pyspark.sql.types import StringType
 import json
 import plotly.graph_objects as go
 import plotly.express as px
+from plotly.subplots import make_subplots
 # import plotly.io as pio
 import structlog
 
 from main_spark import df_pipeline, get_spark_session
-from spark_process import field_larger_than, agg_districts, agg_subzones_of_district, get_historic_data_df
-from spark_process import filter_district, agg_subzones_of_district_by_time, cast_to_datetime
+import spark_process as sp
 from crud import mongo
 import layout as lo
 from schemas import historic_data_schema
-from constants import GEOJSON_FILE, districts
+from constants import GEOJSON_FILE, districts, subarea_colors
 
 structlog.configure(processors=[structlog.processors.JSONRenderer()])
 log = structlog.getLogger()
 
 spark_session = get_spark_session()
-app = Dash(external_stylesheets=[dbc.themes.DARKLY], suppress_callback_exceptions=True)
+app = Dash(external_stylesheets=[dbc.themes.YETI], suppress_callback_exceptions=True)
 
 df = df_pipeline(spark_session)  # Dataframe for the incoming data
-temp_series_df = get_historic_data_df(spark_session, historic_data_schema)  # Dataframe for the historic data
+temp_series_df = sp.get_historic_data_df(spark_session, historic_data_schema)  # Dataframe for the historic data
 
+# subarea_colors = px.colors.qualitative.Dark24
 
 geojsonfile = GEOJSON_FILE
 with open(geojsonfile) as file:
@@ -66,7 +67,7 @@ def update_df(n_intervals):
     global df
     global temp_series_df
     df = df_pipeline(spark_session)
-    temp_series_df = get_historic_data_df(spark_session, historic_data_schema)  # Dataframe for the historic data
+    temp_series_df = sp.get_historic_data_df(spark_session, historic_data_schema)  # Dataframe for the historic data
     return {}
 
 
@@ -80,8 +81,8 @@ def update_df(n_intervals):
 # Filter the dataframe and display the map of the homepage
 @app.callback(Output("map", "figure"), Input('interval-component', 'n_intervals'))
 def get_index_map_data(n_intervals):
-    filtered_df = field_larger_than(df, 'nivelServicio', 1)
-    filtered_df = cast_to_datetime(filtered_df)
+    filtered_df = sp.field_larger_than(df, 'nivelServicio', 1)
+    filtered_df = sp.cast_to_datetime(filtered_df)
 
     lat_foc = 40.42532
     lon_foc = -3.686722
@@ -92,7 +93,7 @@ def get_index_map_data(n_intervals):
         marker=dict(color=filtered_df.intensidad, colorscale='bluered', showscale=False, cmin=0, cmax=2500)
     ))
 
-    district_agg = agg_districts(df).toPandas()
+    district_agg = sp.agg_districts(df).toPandas()
 
     fig = px.choropleth_mapbox(district_agg, geojson=geojson, mapbox_style="open-street-map", color='avg(intensidad)',
                                locations='distrito', featureidkey='properties.name', color_continuous_scale='viridis',
@@ -110,20 +111,21 @@ def get_index_map_data(n_intervals):
 def get_district_map_data(value, n_intervals):
     district = value
     log.info(f"{district}")
-    filtered_df = filter_district(df, district)
-    filtered_df = cast_to_datetime(filtered_df)
+    filtered_df = sp.filter_district(df, district)
+    filtered_df = sp.cast_to_datetime(filtered_df)
 
     district_center = districts[district]
     lon_foc = district_center[0]
     lat_foc = district_center[1]
     log.info(str(lon_foc) + ", " + str(lat_foc))
 
-    fig = px.scatter_mapbox(filtered_df, lat=filtered_df['latitud'], lon=filtered_df['longitud'],
+    # TODO adjust colorscale
+    fig = px.scatter_mapbox(filtered_df, lat=filtered_df['latitud'], lon=filtered_df['longitud'], opacity=1,
                             mapbox_style="open-street-map", hover_data=filtered_df[['intensidad', 'descripcion']],
-                            color_continuous_scale='bluered', center={'lat': lat_foc,  'lon': lon_foc}, zoom=13,
-                            color='intensidad', color_continuous_midpoint=1000)
+                            center={'lat': lat_foc,  'lon': lon_foc}, zoom=13,
+                            color='carga', color_continuous_scale='bluered')
 
-    fig.update_layout(margin=dict(l=10, r=5, t=10, b=10))
+    fig.update_layout(margin=dict(l=10, r=5, t=10, b=10), )
     return fig
 
 
@@ -133,23 +135,80 @@ def get_district_map_data(value, n_intervals):
 def plot_subzones_bar(value, n_intervals):
     district = value
     log.info(f"barplot: {district}")
-    filtered_df = agg_subzones_of_district(df, district).toPandas()
-    filtered_df = filtered_df.sort_index()
+    filtered_df = sp.agg_subzones_of_district(df, district).toPandas()
 
-    fig = px.bar(filtered_df, x='subarea', y='avg(carga)')
+    fig = px.bar(filtered_df, x='subarea', y='avg(carga)', color_discrete_sequence=subarea_colors, color='subarea')
     fig.update_layout(margin=dict(l=10, r=10, t=10, b=10))
     return fig
 
 
-@app.callback(Output('temp-series', 'figure'), [Input('district-dropdown', 'value')])
-def plot_temp_series(value):
+@app.callback(Output("subarea-plots", "figure"),
+              Input('district-dropdown', 'value'),
+              Input('interval-component', 'n_intervals'))
+def subarea_plots(value, n_intervals):
+    filtered_df = sp.agg_subzones_of_district(df, value).toPandas()
+    map_df = sp.filter_district(df, value)
+    map_df = sp.cast_to_datetime(map_df)
+
+    fig = make_subplots(
+        rows=1, cols=2,
+        specs=[[{'type': 'mapbox'}, {'type': 'xy'}]],
+    )
+
+    fig.append_trace(go.Bar(x=filtered_df['subarea'], y=filtered_df['avg(carga)'],
+                            legendgroup='subareas',
+                            marker=dict(color=subarea_colors[value]),
+                            opacity=0.7,
+                            ), 1, 2)
+
+    trace = go.Scattermapbox(lat=map_df['latitud'], lon=map_df['longitud'],
+                             legendgroup='subareas',
+                             mode='markers',
+                             marker=dict(sizemode='area',
+                                         color=subarea_colors[value]),
+                             hovertext=map_df['subarea'],
+                             marker_size=map_df.carga,
+                             )
+
+    district_center = districts[value]
+    lon_foc = district_center[0]
+    lat_foc = district_center[1]
+
+    fig.update_layout(mapbox=dict(style='open-street-map', center=dict(lat=lat_foc, lon=lon_foc), zoom=10),
+                      margin=dict(l=10, r=10, t=10, b=10))
+
+    fig.append_trace(trace, 1, 1)
+
+    return fig
+
+
+@app.callback(Output('temp-series', 'figure'),
+              Input('district-dropdown', 'value'),
+              Input('interval-component', 'n_intervals'))
+def plot_temp_series(value, n_intervals):
     district = value
-    filtered_df = agg_subzones_of_district_by_time(df, district)
-    filtered_df = cast_to_datetime(filtered_df)
+    filtered_df = sp.agg_subzones_of_district_by_time(temp_series_df, district)
+    filtered_df = sp.cast_to_datetime(filtered_df)
     filtered_df.pivot(index='fecha_hora', columns='subarea', values='avg(carga)')
-    fig = px.line(filtered_df, x='fecha_hora', y='avg(carga)',)
+    fig = px.line(filtered_df, x='fecha_hora', y='avg(carga)', color='subarea')
+    fig.update_xaxes(rangeselector=dict(buttons=list([
+        dict(count=1, label='1H', step='hour', stepmode='backward'),
+        dict(count=6, label='6H', step='hour', stepmode='backward'),
+        dict(count=1, label='1d', step='day', stepmode='backward'),
+        dict(count=1, label='1m', step='month', stepmode='backward')
+    ])))
     fig.update_layout(margin=dict(l=10, r=10, t=10, b=10))
     return fig
+
+
+# Generate the radio items with the subareas of the selected districts
+# @app.callback(Output('radio-items', 'children'), Input('district-dropdown', 'value'))
+# def subarea_buttons(value):
+#     subareas = sp.get_subareas_of_district(df, value)
+#     radio_list = []
+#     for sa in subareas:
+#         radio_list.append(html.Button(sa, id=sa.subarea))
+#     return radio_list
 
 
 @app.callback(Output('page-content', 'children'), [Input('url', 'pathname')])
