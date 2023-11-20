@@ -2,6 +2,7 @@ from pyspark.sql.functions import lit, udf, col, to_timestamp
 from pyspark.sql.types import DoubleType, StringType
 from pyspark.sql import SparkSession, DataFrame
 import pandas as pd
+import random
 
 from crud import query_sensor_districts
 import requests
@@ -91,3 +92,17 @@ def field_larger_than(df: DataFrame, field: str, threshold: int) -> DataFrame:
 
 def field_less_than(df: DataFrame, field: str, threshold: int) -> DataFrame:
     return df.filter(col(field) < threshold)
+
+
+def get_subareas_of_district(df: DataFrame, district: str) -> []:
+    return filter_district(df, district).select('subarea').distinct().collect()
+
+
+# Function to generate random colors for each subarea for visualization. Not used in app.
+def generate_subarea_colors(df: DataFrame, district) -> []:
+    subareas = get_subareas_of_district(df, district)
+    return ["#%06x" % random.randint(0, 0xFFFFFF) for _ in range(len(subareas))]
+
+
+def assign_colors(df: DataFrame):
+    df.withColumn()

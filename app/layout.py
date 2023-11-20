@@ -42,21 +42,25 @@ def set_district_layout():
         dcc.Graph(id='temp-series',
                   config=config),
         html.Br(),
+        # dbc.Row([
+        #     dbc.Col(
+        #         html.Div(id='radio-items'), width=4),
+        #     ]),
         html.Br(),
         dbc.Row([
             dbc.Col(
                 html.Div([
-                    dcc.Graph(id='district-map',
+                    dcc.Graph(id='subarea-plots',
                               config=config)
-                ]), width=4),
+                ]), width=8),
+            # dbc.Col(
+            #     html.Div([
+            #         dcc.Graph(id='subzones-bar',
+            #                   config=config)
+            #     ]), width=4),
             dbc.Col(
                 html.Div([
-                    dcc.Graph(id='subzones-bar',
-                              config=config)
-                ]), width=4),
-            dbc.Col(
-                html.Div([
-                    dcc.Graph(id='some-plot',config=config)
+                    dcc.Graph(id='some-plot', config=config)
                 ]), width=4),
         ]),
     ])
