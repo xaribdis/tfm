@@ -1,28 +1,14 @@
-# FROM apache/spark-py:v3.3.2
-FROM python:3.12-alpine
+FROM bitnami/spark:3.3.3
 
-WORKDIR /code
+COPY /spark/jars/mongo-spark-connector_2.12-10.1.1.jar jars/mongo-spark-connector_2.12-10.1.1.jar
+COPY /spark/jars/spark-xml_2.12-0.13.0.jar jars/spark-xml_2.12-0.13.0.jar
 
-RUN mkdir -p ./data
+# WORKDIR /opt/bitnami/spark/code 
 
-# COPY /spark/jars /spark/jars
+ADD app ./code/app
 
-COPY /requirements.txt .
+COPY requirements.txt ./code
 
 USER root
 
-# RUN groupadd -r apache -g 433 && \
-#     useradd -u 431 -r -g apache -s /sbin/nologin -c "Docker image user" apache
-
-RUN pip install --no-cache-dir --upgrade --user -r requirements.txt
-
-COPY ./data/madrid-districts.geojson ./data/madrid-districts.geojson
-
-COPY ./app ./app
-
-EXPOSE 8050
-
-# USER apache
-RUN pwd
-
-CMD ["python", "app/app.py"]
+RUN pip install --no-cache-dir --use-pep517 --upgrade --user -r code/requirements.txt
