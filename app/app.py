@@ -23,6 +23,7 @@ app = Dash(external_stylesheets=[dbc.themes.YETI], suppress_callback_exceptions=
 
 df = df_pipeline(spark_session)  # Dataframe for the incoming data
 temp_series_df = sp.get_historic_data_df(spark_session, historic_data_schema)  # Dataframe for the historic data
+# try add filtered_df for district page
 
 # subarea_colors = px.colors.qualitative.Dark24
 
@@ -182,12 +183,15 @@ def subarea_plots(value, n_intervals):
     return fig
 
 
+#TODO change to plot aggregate by district timeseries
 @app.callback(Output('temp-series', 'figure'),
               Input('district-dropdown', 'value'),
               Input('interval-component', 'n_intervals'))
 def plot_temp_series(value, n_intervals):
     district = value
-    filtered_df = sp.agg_subzones_of_district_by_time(temp_series_df, district)
+    # filtered_df = sp.agg_subzones_of_district_by_time(temp_series_df, district)
+    filtered_df = sp.filter_district(temp_series_df, value)
+    filtered_df = filtered_df.groupBy('fecha_hora').avg('carga')
     filtered_df = sp.cast_to_datetime(filtered_df)
     filtered_df.pivot(index='fecha_hora', columns='subarea', values='avg(carga)')
     fig = px.line(filtered_df, x='fecha_hora', y='avg(carga)', color='subarea')
@@ -198,6 +202,22 @@ def plot_temp_series(value, n_intervals):
         dict(count=1, label='1m', step='month', stepmode='backward')
     ])))
     fig.update_layout(margin=dict(l=10, r=10, t=10, b=10))
+    return fig
+
+
+# TODO Make subplot for tempseries and subplots to share rangeselectors
+# Boxplot for subareas of district
+@app.callback(Output('subarea-boxplots', 'figure'),
+              Input('district-dropdown', 'value'),
+              Input('interval-component', 'n_intervals'))
+def plot_subarea_box(value, n_intervals):
+    filtered_df = sp.agg_subzones_of_district_by_time(temp_series_df, value)
+    filtered_df = sp.cast_to_datetime(filtered_df)
+    filtered_df.pivot(index='fecha_hora', columns='subarea', values='avg(carga)')
+
+    fig = go.Figure(data=[go.Box(
+        y=filtered_df[col].values, name=df[col], marker_color=subarea_colors[value][col]) for col in filtered_df])
+    
     return fig
 
 
@@ -224,4 +244,4 @@ if __name__ == "__main__":
         app.run_server(debug=True)
     except KeyboardInterrupt:
         mongo.close_connection()
-        print('Interrupted')
+        log.info('Interrupted')

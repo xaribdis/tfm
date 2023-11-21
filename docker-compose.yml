@@ -40,11 +40,11 @@ services:
   mongo:
     image: "mongo:jammy"
     ports:
-      - 27017:27017
+      - 27027:27017
     networks:
       - app
     volumes:
-      - db_data:opt/bitnami/data/db
+      - db_data:/opt/bitnami/data/db
 volumes:
   db_data:
 networks:

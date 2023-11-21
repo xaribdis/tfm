@@ -3,6 +3,7 @@ from pyspark.sql.types import DoubleType, StringType
 from pyspark.sql import SparkSession, DataFrame
 import pandas as pd
 import random
+import numpy as np
 
 from crud import query_sensor_districts
 import requests
@@ -61,6 +62,7 @@ def get_historic_data_df(spark_session: SparkSession, custom_schema) -> DataFram
     return spark_session.read.format('mongodb').load(schema=custom_schema)
 
 
+# TODO refactor agg_districts_by_field
 def agg_districts(df: DataFrame) -> DataFrame:
     return df.groupBy('distrito').avg('intensidad')
 
@@ -69,6 +71,7 @@ def filter_district(df: DataFrame, district: str) -> DataFrame:
     return df.filter(col('distrito') == district)
 
 
+# TODO refactor agg_subzones_by_field
 def agg_subzones_of_district(df: DataFrame, district: str) -> DataFrame:
     filtered_df = filter_district(df, district)
     return filtered_df.groupBy('subarea').avg('carga')
@@ -101,7 +104,7 @@ def get_subareas_of_district(df: DataFrame, district: str) -> []:
 # Function to generate random colors for each subarea for visualization. Not used in app.
 def generate_subarea_colors(df: DataFrame, district) -> []:
     subareas = get_subareas_of_district(df, district)
-    return ["#%06x" % random.randint(0, 0xFFFFFF) for _ in range(len(subareas))]
+    return ['hsl('+str(h)+',50%'+',50%)' for h in np.linspace(0, 360, len(subareas))]
 
 
 def assign_colors(df: DataFrame):

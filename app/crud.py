@@ -58,10 +58,12 @@ class MongoInitializer:
             self.sensor_districts_correspondence()
             self._n_sensors = new_n_sensors
 
+
+# TODO input district and subarea for unknown data with k-neighbors
     @staticmethod
     def connect_to_mongo():
         # TODO load from config
-        client = pymongo.MongoClient("mongodb://127.0.0.1", port=27017)
+        client = pymongo.MongoClient("mongodb://172.22.0.2", port=27017)
 
         try:
             client.admin.command('ping')
