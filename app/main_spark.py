@@ -31,17 +31,26 @@ def df_pipeline(spark_session: SparkSession):
     df = sp.read_data(spark_session, traffic_sensor_schema)
     df = sp.utm_to_latlong(df)
     df = sp.get_districts(df)
+    df = sp.assign_colors(df)
     mongo.healthz()
     load_to_mongo(df)
     return df
 
 
-if __name__ == "__main__":
-    spark_session = get_spark_session()
-    df = df_pipeline(spark_session)
-    with open('colorfile.txt', 'w') as file:
-        for district in constants.districts.keys():
-            print(district)
-            file.write(f"{district}: {sp.generate_subarea_colors(df, district)} \n")
+# if __name__ == "__main__":
+#     spark_session = get_spark_session()
+#     df = df_pipeline(spark_session)
+#     filtered_df = sp.filter_district(df, 'Arganzuela')
+#     filtered_df = sp.get_n_first_elements_by_field(filtered_df, 10, 'intensidad')
+#     filtered_df.show()
+#     print(constants.subarea_colors['Arganzuela'])
+#     filtered_df['subarea_colors'] = constants.subarea_colors['Arganzuela']
+#     print(filtered_df)
 
 
+#     with open('colorfile.txt', 'w') as file:
+#         for district in constants.districts.keys():
+#             print(district)
+#             file.write(f"{district}: {sp.generate_subarea_colors(df, district)} \n")
+# #
+#

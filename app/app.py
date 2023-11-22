@@ -5,6 +5,7 @@ import json
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
+import numpy as np
 # import plotly.io as pio
 import structlog
 
@@ -105,9 +106,9 @@ def get_index_map_data(n_intervals):
 
 
 # Show map with every sensor of the dropdown selected district
-@app.callback(Output("district-map", "figure"),
-              Input('district-dropdown', 'value'),
-              Input('interval-component', 'n_intervals'))
+# @app.callback(Output("district-map", "figure"),
+#               Input('district-dropdown', 'value'),
+#               Input('interval-component', 'n_intervals'))
 def get_district_map_data(value, n_intervals):
     district = value
     log.info(f"{district}")
@@ -129,9 +130,9 @@ def get_district_map_data(value, n_intervals):
     return fig
 
 
-@app.callback(Output('subzones-bar', 'figure'),
-              Input('district-dropdown', 'value'),
-              Input('interval-component', 'n_intervals'))
+# @app.callback(Output('subzones-bar', 'figure'),
+#               Input('district-dropdown', 'value'),
+#               Input('interval-component', 'n_intervals'))
 def plot_subzones_bar(value, n_intervals):
     district = value
     log.info(f"barplot: {district}")
@@ -146,38 +147,43 @@ def plot_subzones_bar(value, n_intervals):
               Input('district-dropdown', 'value'),
               Input('interval-component', 'n_intervals'))
 def subarea_plots(value, n_intervals):
-    filtered_df = sp.agg_subzones_of_district(df, value).toPandas()
-    map_df = sp.filter_district(df, value)
+    filtered_df = sp.agg_subzones_of_district(df, value).sort('subarea').toPandas()
+    # filtered_df['subarea_colors'] = subarea_colors[value]
+    filtered_df['subarea_colors'] = filtered_df['subarea'].map(subarea_colors[value])
+    map_df = sp.filter_district(df, value).sort('subarea')
     map_df = sp.cast_to_datetime(map_df)
 
     fig = make_subplots(
         rows=1, cols=2,
         specs=[[{'type': 'mapbox'}, {'type': 'xy'}]],
+        horizontal_spacing=0.06
     )
 
     fig.append_trace(go.Bar(x=filtered_df['subarea'], y=filtered_df['avg(carga)'],
                             legendgroup='subareas',
-                            marker=dict(color=subarea_colors[value]),
+                            marker=dict(color=filtered_df['subarea_colors']),
                             opacity=0.7,
-                            ), 1, 2)
+                            hoverinfo='skip',
+                            showlegend=False), 1, 2)
 
     trace = go.Scattermapbox(lat=map_df['latitud'], lon=map_df['longitud'],
                              legendgroup='subareas',
                              mode='markers',
                              marker=dict(sizemode='area',
-                                         color=subarea_colors[value]),
+                                         color=map_df['subarea_color']),
                              hovertext=map_df['subarea'],
                              marker_size=map_df.carga,
-                             )
+                             showlegend=False)
 
     district_center = districts[value]
     lon_foc = district_center[0]
     lat_foc = district_center[1]
 
-    fig.update_layout(mapbox=dict(style='open-street-map', center=dict(lat=lat_foc, lon=lon_foc), zoom=10),
-                      margin=dict(l=10, r=10, t=10, b=10))
+    fig.update_layout(mapbox=dict(style='open-street-map', center=dict(lat=lat_foc, lon=lon_foc), zoom=12),
+                      margin=dict(l=5, r=5, t=5, b=5))
 
     fig.append_trace(trace, 1, 1)
+    fig['layout']['yaxis']['title'] = 'Nivel de Carga'
 
     return fig
 
@@ -198,6 +204,16 @@ def plot_temp_series(value, n_intervals):
         dict(count=1, label='1m', step='month', stepmode='backward')
     ])))
     fig.update_layout(margin=dict(l=10, r=10, t=10, b=10))
+    return fig
+
+
+@app.callback(Output('highest-occupation', 'figure'),
+              Input('district-dropdown', 'value'),
+              Input('interval-component', 'n_intervals'))
+def plot_most_traffic_sensors(value, n_intervals):
+    filtered_df = sp.filter_district(df, value)
+    filtered_df = sp.get_n_first_elements_by_field(filtered_df, 10, 'intensidad').toPandas()
+    fig = px.bar(filtered_df, x='idelem', y='intensidad')
     return fig
 
 

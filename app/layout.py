@@ -55,12 +55,13 @@ def set_district_layout():
                 ]), width=8),
             # dbc.Col(
             #     html.Div([
-            #         dcc.Graph(id='subzones-bar',
+            #         dcc.Graph(id='highest-occupation',
             #                   config=config)
             #     ]), width=4),
             dbc.Col(
                 html.Div([
-                    dcc.Graph(id='some-plot', config=config)
+                    dcc.Graph(id='highest-occupation',
+                              config=config)
                 ]), width=4),
         ]),
     ])

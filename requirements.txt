@@ -5,3 +5,4 @@ pymongo==4.4.0
 utm==0.7.0
 plotly~=5.15.0
 dash~=2.11.1
+pandas~=2.0.1
