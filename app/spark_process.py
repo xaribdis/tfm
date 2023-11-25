@@ -1,10 +1,11 @@
 from pyspark.sql.functions import lit, udf, col, to_timestamp
 from pyspark.sql.types import DoubleType, StringType
 from pyspark.sql import SparkSession, DataFrame
+import random
 import requests
 import utm
 import pandas as pd
-import random
+import numpy as np
 
 from crud import query_sensor_districts
 from constants import subarea_colors
@@ -18,6 +19,12 @@ def request_data():
     with open("data/traffic_data.xml", 'wb') as file:
         file.write(r._content)
     r.close()
+
+
+# Remove sensors with no data
+def clean_data(df):
+    return df.filter(df.intensidad != -1)
+
 
 
 # Get date and hour from xml header
@@ -102,7 +109,13 @@ def get_subareas_of_district(df: DataFrame, district: str) -> []:
 # Function to generate random colors for each subarea for visualization. Not used in app.
 def generate_subarea_colors(df: DataFrame, district) -> dict:
     subareas = get_subareas_of_district(df, district)
-    colors = {row.subarea: "#%06x" % random.randint(0, 0xFFFFFF) for row in subareas}
+    colors = {}
+    h = 360 / len(subareas)
+    i = 0
+    for row in subareas:
+        colors[row.subarea] = 'hsl(' + str(i*h) + ',50%' + ',50%)'
+        i += 1
+
     colors['unknown'] = '#39b0b3'
     return colors
 
@@ -112,6 +125,7 @@ def assign_colors(df: DataFrame) -> DataFrame:
     return df.withColumn('subarea_color', color_udf(col('distrito'), col('subarea')))
 
 
-# TODO aggregate subareas
 def get_n_first_elements_by_field(df: DataFrame, n: int, field: str) -> DataFrame:
-    return df.select('idelem', 'intensidad').sort(field, ascending=False).limit(n)
+    filtered_df = df.select('idelem', field, 'subarea_color', 'descripcion', 'intensidadSat').limit(n)
+    return filtered_df.withColumn('idelem', filtered_df.idelem.cast(StringType())).sort(field, ascending=False).toPandas()
+

@@ -25,6 +25,8 @@ app = Dash(external_stylesheets=[dbc.themes.YETI], suppress_callback_exceptions=
 df = df_pipeline(spark_session)  # Dataframe for the incoming data
 temp_series_df = sp.get_historic_data_df(spark_session, historic_data_schema)  # Dataframe for the historic data
 
+# TODO save dropdown value between timeperiods
+
 # subarea_colors = px.colors.qualitative.Dark24
 
 geojsonfile = GEOJSON_FILE
@@ -166,6 +168,7 @@ def subarea_plots(value, n_intervals):
                             hoverinfo='skip',
                             showlegend=False), 1, 2)
 
+    # TODO fix minsize. sizemin property of marker is not valid in scattermapbox because potato
     trace = go.Scattermapbox(lat=map_df['latitud'], lon=map_df['longitud'],
                              legendgroup='subareas',
                              mode='markers',
@@ -212,19 +215,13 @@ def plot_temp_series(value, n_intervals):
               Input('interval-component', 'n_intervals'))
 def plot_most_traffic_sensors(value, n_intervals):
     filtered_df = sp.filter_district(df, value)
-    filtered_df = sp.get_n_first_elements_by_field(filtered_df, 10, 'intensidad').toPandas()
-    fig = px.bar(filtered_df, x='idelem', y='intensidad')
+    filtered_df = sp.get_n_first_elements_by_field(filtered_df, 10, 'intensidad')
+    fig = px.bar(filtered_df, y='idelem', x='intensidad',
+                 orientation='h', color='subarea_color',
+                 hover_data={'subarea_color': False, 'idelem': False, 'intensidad': False,
+                             'descripcion': True, 'intensidadSat': True})
+    fig.update_layout(margin=dict(l=10, r=10, t=10, b=10), showlegend=False)
     return fig
-
-
-# Generate the radio items with the subareas of the selected districts
-# @app.callback(Output('radio-items', 'children'), Input('district-dropdown', 'value'))
-# def subarea_buttons(value):
-#     subareas = sp.get_subareas_of_district(df, value)
-#     radio_list = []
-#     for sa in subareas:
-#         radio_list.append(html.Button(sa, id=sa.subarea))
-#     return radio_list
 
 
 @app.callback(Output('page-content', 'children'), [Input('url', 'pathname')])

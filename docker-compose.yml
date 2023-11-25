@@ -40,7 +40,7 @@ services:
   mongo:
     image: "mongo:jammy"
     ports:
-      - 27017:27017
+      - "27017:27017"
     networks:
       - app
     volumes:
