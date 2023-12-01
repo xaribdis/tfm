@@ -18,7 +18,7 @@ traffic_sensor_schema = StructType([
 
 historic_data_schema = StructType([
     StructField("idelem", IntegerType(), False),
-    StructField("subarea", IntegerType(), True),
+    StructField("subarea", StringType(), True),
     StructField("carga", IntegerType(), True),
     StructField("distrito", StringType(), True),
     StructField("fecha_hora", TimestampType(), True)

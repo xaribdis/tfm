@@ -151,5 +151,5 @@ class MongoInitializer:
 
 
 mongo = MongoInitializer()
-mongo.get_mongo_client()
+# mongo.get_mongo_client()
 # print(mongo.get_mongo_client())

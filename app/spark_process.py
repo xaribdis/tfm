@@ -1,11 +1,10 @@
 from pyspark.sql.functions import lit, udf, col, to_timestamp
 from pyspark.sql.types import DoubleType, StringType
 from pyspark.sql import SparkSession, DataFrame
-import random
 import requests
 import utm
 import pandas as pd
-import numpy as np
+# import numpy as np
 
 from crud import query_sensor_districts
 from constants import subarea_colors
@@ -24,7 +23,6 @@ def request_data():
 # Remove sensors with no data
 def clean_data(df):
     return df.filter(df.intensidad != -1)
-
 
 
 # Get date and hour from xml header
@@ -78,13 +76,18 @@ def filter_district(df: DataFrame, district: str) -> DataFrame:
 
 
 def agg_subzones_of_district(df: DataFrame, district: str) -> DataFrame:
-    filtered_df = filter_district(df, district)
-    return filtered_df.groupBy('subarea').avg('carga')
+    # filtered_df = filter_district(df, district)
+    return df.groupBy('subarea').avg('carga')
+
+
+def agg_district_by_time(df: DataFrame) -> DataFrame:
+    # filtered_df = filter_district(df, district)
+    return df.groupBy('fecha_hora').avg('carga')
 
 
 def agg_subzones_of_district_by_time(df: DataFrame, district: str) -> DataFrame:
-    filtered_df = filter_district(df, district)
-    return filtered_df.groupBy('subarea', 'fecha_hora').avg('carga')
+    # filtered_df = filter_district(df, district)
+    return df.groupBy('subarea', 'fecha_hora').avg('carga')
 
 
 # Since Spark 3.3, TimestampType is not compatible with datetime from pandas so I have to do this stupid transformation

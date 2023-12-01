@@ -1,8 +1,11 @@
+import numpy as np
+
 from pyspark.sql import SparkSession
 from schemas import traffic_sensor_schema, historic_data_schema
 from crud import load_to_mongo, mongo
-from pyspark.sql.types import StringType
+# from pyspark.sql.types import StringType
 import spark_process as sp
+
 import constants
 
 
@@ -38,15 +41,26 @@ def df_pipeline(spark_session: SparkSession):
     return df
 
 
-if __name__ == "__main__":
-    spark_session = get_spark_session()
-    df = df_pipeline(spark_session)
-    # filtered_df['subarea_colors'] = constants.subarea_colors['Arganzuela']
-    # print(filtered_df)
+# if __name__ == "__main__":
+#     spark_session = get_spark_session()
+#     df = sp.get_historic_data_df(spark_session, historic_data_schema)
+#     filtered_df = sp.agg_district_by_time(df, 'Arganzuela')
+#     filtered_df = sp.cast_to_datetime(filtered_df)
+#     print(filtered_df.loc[filtered_df['fecha_hora'] > '2023-11-26'])
 
-    with open('colorfile.txt', 'w') as file:
-        for district in constants.districts.keys():
-            print(district)
-            file.write(f"{district}: {sp.generate_subarea_colors(df, district)} \n")
+    # subareas = sp.get_subareas_of_district(df, 'Arganzuela')
+    # print(sorted(subareas, key=lambda x: int(x.subarea)))
+
+    # print(df.dtypes)
+    # filtered_df = sp.agg_subzones_of_district_by_time(df, 'Arganzuela')
+    # filtered_df = sp.cast_to_datetime(filtered_df)
+    # filtered_df = filtered_df.pivot(index='fecha_hora', columns='subarea', values='avg(carga)').drop(columns=np.nan)
+    # print(filtered_df)
+    # print([constants.subarea_colors['Arganzuela'][col] for col in filtered_df])
+
+    # with open('colorfile.txt', 'w') as file:
+    #     for district in constants.districts.keys():
+    #         print(district)
+    #         file.write(f"{district}: {sp.generate_subarea_colors(df, district)} \n")
 # #
 #

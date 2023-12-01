@@ -42,10 +42,8 @@ def set_district_layout():
         dcc.Graph(id='temp-series',
                   config=config),
         html.Br(),
-        # dbc.Row([
-        #     dbc.Col(
-        #         html.Div(id='radio-items'), width=4),
-        #     ]),
+        dcc.Graph(id='subarea-boxplots',
+                  config=config),
         html.Br(),
         dbc.Row([
             dbc.Col(
