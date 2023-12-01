@@ -111,6 +111,7 @@ def get_index_map_data(n_intervals):
     return fig
 
 
+# Attempt to refactorice, so filter_district is not called innecesarily, but does not work.
 # @app.callback(Output("subarea-plots", "figure"), Output('highest-occupation', 'figure'),
 #               Input('district-dropdown', 'value'), Input('interval-component', 'n_intervals'))
 # def update_district_graphs(value, n_intervals):
@@ -133,137 +134,33 @@ def get_index_map_data(n_intervals):
 #     return time_series_graph, boxplots
 
 
-# Previous version of graphs. DEPRECATED
-# Show map with every sensor of the dropdown selected district
-# @app.callback(Output("district-map", "figure"),
-#               Input('district-dropdown', 'value'),
-#               Input('interval-component', 'n_intervals'))
-def get_district_map_data(value, n_intervals):
-    district = value
-    log.info(f"{district}")
-    filtered_df = sp.filter_district(df, district)
-    filtered_df = sp.cast_to_datetime(filtered_df)
-
-    district_center = districts[district]
-    lon_foc = district_center[0]
-    lat_foc = district_center[1]
-    log.info(str(lon_foc) + ", " + str(lat_foc))
-
-    fig = px.scatter_mapbox(filtered_df, lat=filtered_df['latitud'], lon=filtered_df['longitud'], opacity=1,
-                            mapbox_style="open-street-map", hover_data=filtered_df[['intensidad', 'descripcion']],
-                            center={'lat': lat_foc,  'lon': lon_foc}, zoom=13,
-                            color='carga', color_continuous_scale='bluered')
-
-    fig.update_layout(margin=dict(l=10, r=5, t=10, b=10), )
-    return fig
-
-
-# @app.callback(Output('subzones-bar', 'figure'),
-#               Input('district-dropdown', 'value'),
-#               Input('interval-component', 'n_intervals'))
-def plot_subzones_bar(value, n_intervals):
-    district = value
-    log.info(f"barplot: {district}")
-    filtered_df = sp.agg_subzones_of_district(df, district).toPandas()
-
-    fig = px.bar(filtered_df, x='subarea', y='avg(carga)', color_discrete_sequence=subarea_colors, color='subarea')
-    fig.update_layout(margin=dict(l=10, r=10, t=10, b=10))
-    return fig
-
-
 @app.callback(Output("subarea-plots", "figure"),
               Input('district-dropdown', 'value'),
               Input('interval-component', 'n_intervals'))
 def subarea_plots(value, n_intervals):
-    filtered_df = sp.agg_subzones_of_district(df, value).sort('subarea').toPandas()
-    filtered_df['subarea_colors'] = filtered_df['subarea'].map(subarea_colors[value])
-    map_df = sp.filter_district(df, value).sort('subarea')
-    map_df = sp.cast_to_datetime(map_df)
+    return gr.subarea_plots(df, value)
 
-    fig = make_subplots(
-        rows=1, cols=2,
-        specs=[[{'type': 'mapbox'}, {'type': 'xy'}]],
-        horizontal_spacing=0.06
-    )
 
-    fig.append_trace(go.Bar(x=filtered_df['subarea'], y=filtered_df['avg(carga)'],
-                            legendgroup='subareas',
-                            marker=dict(color=filtered_df['subarea_colors']),
-                            opacity=0.7,
-                            hoverinfo='skip',
-                            showlegend=False), 1, 2)
-#
-#     # TODO fix minsize. sizemin property of marker is not valid in scattermapbox because potato
-    trace = go.Scattermapbox(lat=map_df['latitud'], lon=map_df['longitud'],
-                             legendgroup='subareas',
-                             mode='markers',
-                             marker=dict(sizemode='area',
-                                         color=map_df['subarea_color']),
-                             hovertext=map_df['subarea'],
-                             marker_size=map_df.carga,
-                             showlegend=False)
-
-    district_center = districts[value]
-    lon_foc = district_center[0]
-    lat_foc = district_center[1]
-
-    fig.update_layout(mapbox=dict(style='open-street-map', center=dict(lat=lat_foc, lon=lon_foc), zoom=12),
-                      margin=dict(l=5, r=5, t=5, b=5))
-
-    fig.append_trace(trace, 1, 1)
-    fig['layout']['yaxis']['title'] = 'Nivel de Carga'
-
-    return fig
-#
-#
 @app.callback(Output('temp-series', 'figure'),
               Input('district-dropdown', 'value'),
               Input('interval-component', 'n_intervals'))
 def plot_time_series(value, n_intervals):
-    district = value
-    filtered_df = sp.agg_district_by_time(time_series_df, district)
-    filtered_df = sp.cast_to_datetime(filtered_df)
-    # filtered_df.pivot(index='fecha_hora', columns='subarea', values='avg(carga)')
-    fig = px.line(filtered_df, x='fecha_hora', y='avg(carga)')
-    fig.update_xaxes(rangeselector=dict(buttons=list([
-        dict(count=1, label='1H', step='hour', stepmode='backward'),
-        dict(count=6, label='6H', step='hour', stepmode='backward'),
-        dict(count=1, label='1d', step='day', stepmode='backward'),
-        dict(count=1, label='1m', step='month', stepmode='backward')
-    ])))
-    fig.update_layout(margin=dict(l=10, r=10, t=10, b=10))
-    return fig
-#
-#
+    return gr.plot_time_series(time_series_df, value)
+
+
 @app.callback(Output('highest-occupation', 'figure'),
               Input('district-dropdown', 'value'),
               Input('interval-component', 'n_intervals'))
 def plot_highest_traffic_sensors(value, n_intervals):
-    filtered_df = sp.filter_district(df, value)
-    filtered_df = sp.get_n_first_elements_by_field(filtered_df, 10, 'intensidad')
-    fig = px.bar(filtered_df, y='idelem', x='intensidad',
-                 orientation='h', color='subarea_color',
-                 hover_data={'subarea_color': False, 'idelem': False, 'intensidad': False,
-                             'descripcion': True, 'intensidadSat': True})
-    fig.update_layout(margin=dict(l=10, r=10, t=10, b=10), showlegend=False)
-    return fig
-#
-#
+    return gr.plot_highest_traffic_sensors(df, value)
+
+
 # # Boxplot for subareas of district
 @app.callback(Output('subarea-boxplots', 'figure'),
               Input('district-dropdown', 'value'),
               Input('interval-component', 'n_intervals'))
 def plot_subarea_box(value, n_intervals):
-    filtered_df = sp.agg_subzones_of_district_by_time(time_series_df, value)
-    filtered_df = sp.cast_to_datetime(filtered_df)
-    filtered_df = filtered_df.pivot(index='fecha_hora', columns='subarea', values='avg(carga)').drop(columns=np.nan)
-
-    fig = go.Figure(data=[go.Box(
-        y=filtered_df[col].values, name=col, marker_color=subarea_colors[value][col]) for col in filtered_df])
-    fig.update_layout(margin=dict(l=10, r=10, t=10, b=10), showlegend=False)
-    fig.update_yaxes(range=[0, 100])
-
-    return fig
+    return gr.plot_subarea_box(time_series_df, value)
 
 
 @app.callback(Output('page-content', 'children'), [Input('url', 'pathname')])
