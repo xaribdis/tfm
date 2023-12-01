@@ -1,12 +1,8 @@
 from dash import Dash, html, dcc, callback, Output, Input, State
 import dash_bootstrap_components as dbc
-from pyspark.sql.types import StringType
 import json
 import plotly.graph_objects as go
 import plotly.express as px
-from plotly.subplots import make_subplots
-import numpy as np
-# import plotly.io as pio
 import structlog
 
 from main_spark import df_pipeline, get_spark_session

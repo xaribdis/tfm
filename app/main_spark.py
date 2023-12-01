@@ -44,6 +44,7 @@ def df_pipeline(spark_session: SparkSession):
 # if __name__ == "__main__":
 #     spark_session = get_spark_session()
 #     df = sp.get_historic_data_df(spark_session, historic_data_schema)
+#     filtered_df = sp.filter_district(df, 'Arganzuela')
 #     filtered_df = sp.agg_district_by_time(df, 'Arganzuela')
 #     filtered_df = sp.cast_to_datetime(filtered_df)
 #     print(filtered_df.loc[filtered_df['fecha_hora'] > '2023-11-26'])
