@@ -3,7 +3,7 @@ import dash_bootstrap_components as dbc
 import json
 import plotly.graph_objects as go
 import plotly.express as px
-import structlog
+# import structlog
 
 from main_spark import df_pipeline, get_spark_session
 import spark_process as sp
@@ -13,8 +13,8 @@ from schemas import historic_data_schema
 from constants import GEOJSON_FILE, districts, subarea_colors
 import graphs as gr
 
-structlog.configure(processors=[structlog.processors.JSONRenderer()])
-log = structlog.getLogger()
+# structlog.configure(processors=[structlog.processors.JSONRenderer()])
+# log = structlog.getLogger()
 
 spark_session = get_spark_session()
 app = Dash(external_stylesheets=[dbc.themes.YETI], suppress_callback_exceptions=True)
@@ -25,8 +25,6 @@ time_series_df = sp.get_historic_data_df(spark_session, historic_data_schema)  #
 
 
 # TODO cache dropdown value between timeperiods
-
-# subarea_colors = px.colors.qualitative.Dark24
 
 geojsonfile = GEOJSON_FILE
 with open(geojsonfile) as file:
@@ -107,7 +105,7 @@ def get_index_map_data(n_intervals):
     return fig
 
 
-# Attempt to refactorice, so filter_district is not called innecesarily, but does not work.
+# Attempt to refactorice, so filter_district is not called unnecessarily, but does not work.
 # @app.callback(Output("subarea-plots", "figure"), Output('highest-occupation', 'figure'),
 #               Input('district-dropdown', 'value'), Input('interval-component', 'n_intervals'))
 # def update_district_graphs(value, n_intervals):
@@ -169,7 +167,7 @@ def display_page(pathname):
 
 if __name__ == "__main__":
     try:
-        app.run_server(debug=True)
+        app.run_server(debug=False)
     except KeyboardInterrupt:
         mongo.close_connection()
         print('Interrupted')

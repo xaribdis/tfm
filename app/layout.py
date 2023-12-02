@@ -30,11 +30,14 @@ def set_district_layout():
         html.Br(),
         html.Br(),
         dbc.Row([
+            dcc.Store('memory-intervals', storage_type='session'),
             dbc.Col(
                 dcc.Dropdown(
                     id='district-dropdown',
                     options=[{'label': district, 'value': district} for district in districts.keys()],
-                    value='Arganzuela'
+                    value='Arganzuela',
+                    persistence=True,
+                    persistence_type='session'
                 ), width=6
             ),
             dbc.Col(width=5),
@@ -51,11 +54,6 @@ def set_district_layout():
                     dcc.Graph(id='subarea-plots',
                               config=config)
                 ]), width=8),
-            # dbc.Col(
-            #     html.Div([
-            #         dcc.Graph(id='highest-occupation',
-            #                   config=config)
-            #     ]), width=4),
             dbc.Col(
                 html.Div([
                     dcc.Graph(id='highest-occupation',
