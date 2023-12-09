@@ -1,0 +1,5 @@
+exit
+db.historic.findOne()
+db.historic.findOne)=
+show collections
+use myapp

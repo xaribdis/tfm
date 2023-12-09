@@ -1,0 +1,3 @@
+mongosh
+cd code
+exit
