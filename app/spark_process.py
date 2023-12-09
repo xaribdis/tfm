@@ -1,10 +1,9 @@
-from pyspark.sql.functions import lit, udf, col, to_timestamp
+from pyspark.sql.functions import lit, udf, col, to_timestamp, regexp_replace
 from pyspark.sql.types import DoubleType, StringType
 from pyspark.sql import SparkSession, DataFrame
 import requests
 import utm
 import pandas as pd
-# import numpy as np
 
 from crud import query_sensor_districts
 from constants import subarea_colors
@@ -59,6 +58,8 @@ def read_data(spark_session: SparkSession, custom_schema) -> DataFrame:
         .load("data/traffic_data.xml", schema=custom_schema)
 
     df = df.withColumn("fecha_hora", to_timestamp(lit(fecha_hora), "dd/MM/yyyy HH:mm:ss"))
+    df = df.withColumn('st_x', regexp_replace('st_x', ',', '.').cast(DoubleType()))
+    df = df.withColumn('st_y', regexp_replace('st_y', ',', '.').cast(DoubleType()))
     return df
 
 

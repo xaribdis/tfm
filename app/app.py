@@ -3,18 +3,15 @@ import dash_bootstrap_components as dbc
 import json
 import plotly.graph_objects as go
 import plotly.express as px
-# import structlog
 
 from main_spark import df_pipeline, get_spark_session
 import spark_process as sp
 from crud import mongo
 import layout as lo
 from schemas import historic_data_schema
-from constants import GEOJSON_FILE, districts, subarea_colors
+from constants import GEOJSON_FILE
 import graphs as gr
 
-# structlog.configure(processors=[structlog.processors.JSONRenderer()])
-# log = structlog.getLogger()
 
 spark_session = get_spark_session()
 app = Dash(external_stylesheets=[dbc.themes.YETI], suppress_callback_exceptions=True)
@@ -23,8 +20,6 @@ app = Dash(external_stylesheets=[dbc.themes.YETI], suppress_callback_exceptions=
 df = df_pipeline(spark_session)  # Dataframe for the incoming data
 time_series_df = sp.get_historic_data_df(spark_session, historic_data_schema)  # Dataframe for the historic data
 
-
-# TODO cache dropdown value between timeperiods
 
 geojsonfile = GEOJSON_FILE
 with open(geojsonfile) as file:
@@ -71,14 +66,6 @@ def update_df(n_intervals):
     return {}
 
 
-# Load the graph from a json in a Store to avoid load time
-# @callback(Output("map", "figure"), Input("interval-component", "n_intervals"),
-#           State("map-data", 'data'))
-# def display_map(n_intervals, data):
-#     return dcc.Graph(figure=str(json.loads(data)))
-
-
-# TODO cache the map for all users as it is the same
 # Filter the dataframe and display the map of the homepage
 @app.callback(Output("map", "figure"), Input('interval-component', 'n_intervals'))
 def get_index_map_data(n_intervals):
@@ -105,7 +92,8 @@ def get_index_map_data(n_intervals):
     return fig
 
 
-# Attempt to refactorice, so filter_district is not called unnecessarily, but does not work.
+# Attempt to refactorice, so filter_district is not called unnecessarily, but does not work
+# and the error does not give any information. Possibly a bug of Dash.
 # @app.callback(Output("subarea-plots", "figure"), Output('highest-occupation', 'figure'),
 #               Input('district-dropdown', 'value'), Input('interval-component', 'n_intervals'))
 # def update_district_graphs(value, n_intervals):
@@ -128,6 +116,7 @@ def get_index_map_data(n_intervals):
 #     return time_series_graph, boxplots
 
 
+# District map with every sensor colored by subarea, and size dependant on charge percentage.
 @app.callback(Output("subarea-plots", "figure"),
               Input('district-dropdown', 'value'),
               Input('interval-component', 'n_intervals'))
@@ -135,6 +124,7 @@ def subarea_plots(value, n_intervals):
     return gr.subarea_plots(df, value)
 
 
+# Time series with the average charge of a district. Time selector for last hour, 6 h, 1 day and 1 month.
 @app.callback(Output('temp-series', 'figure'),
               Input('district-dropdown', 'value'),
               Input('interval-component', 'n_intervals'))
@@ -142,6 +132,7 @@ def plot_time_series(value, n_intervals):
     return gr.plot_time_series(time_series_df, value)
 
 
+# Recover the 10 sensors that detect highest traffic
 @app.callback(Output('highest-occupation', 'figure'),
               Input('district-dropdown', 'value'),
               Input('interval-component', 'n_intervals'))
@@ -149,7 +140,7 @@ def plot_highest_traffic_sensors(value, n_intervals):
     return gr.plot_highest_traffic_sensors(df, value)
 
 
-# # Boxplot for subareas of district
+# # Boxplot for time series of district subareas
 @app.callback(Output('subarea-boxplots', 'figure'),
               Input('district-dropdown', 'value'),
               Input('interval-component', 'n_intervals'))
@@ -167,7 +158,7 @@ def display_page(pathname):
 
 if __name__ == "__main__":
     try:
-        app.run_server(debug=False)
+        app.run_server(host='0.0.0.0', debug=True)
     except KeyboardInterrupt:
         mongo.close_connection()
         print('Interrupted')

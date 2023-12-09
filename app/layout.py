@@ -1,8 +1,6 @@
 import dash_bootstrap_components as dbc
 from dash import dcc
 from dash import html
-import plotly.express as px
-import plotly.graph_objects as go
 from constants import districts
 
 TEMPLATE = 'plotly_dark'
@@ -24,7 +22,7 @@ def set_district_layout():
         html.Br(),
         html.Br(),
         dbc.Row([
-            dbc.Col(html.H1('Districts'), width=9),
+            dbc.Col(html.H1('Información de distrito'), width=9),
             dbc.Col(width=2),
         ], justify='center'),
         html.Br(),

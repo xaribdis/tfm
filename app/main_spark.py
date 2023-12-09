@@ -1,23 +1,18 @@
-import numpy as np
-
 from pyspark.sql import SparkSession
-from schemas import traffic_sensor_schema, historic_data_schema
+from schemas import traffic_sensor_schema
 from crud import load_to_mongo, mongo
-# from pyspark.sql.types import StringType
 import spark_process as sp
-
-import constants
 
 
 # Get or create SparkSession with needed packages for mongo and xml
 def get_spark_session() -> SparkSession:
-    # TODO load from config
     spark_session = SparkSession \
         .builder \
         .config("spark.jars.packages", "com.databricks:spark-xml_2.12:0.13.0") \
         .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.12:10.1.1") \
-        .config("spark.mongodb.read.connection.uri", "mongodb://127.0.0.1/myapp.historic") \
-        .config("spark.mongodb.write.connection.uri", "mongodb://127.0.0.1/myapp.historic") \
+        .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.12:10.1.1") \
+        .config("spark.mongodb.read.connection.uri", "mongodb://mongo:27017/myapp.historic") \
+        .config("spark.mongodb.write.connection.uri", "mongodb://mongo:27017/myapp.historic") \
         .config("spark.submit.pyFiles", "app/crud.py") \
         .getOrCreate()
 
@@ -29,7 +24,6 @@ def get_spark_session() -> SparkSession:
 # Read, preprocess and load data to mongo, and check everything is correct in database
 def df_pipeline(spark_session: SparkSession):
     sp.request_data()
-    # spark_session = get_spark_session()
     mongo.get_mongo_client()
     df = sp.read_data(spark_session, traffic_sensor_schema)
     df = sp.clean_data(df)
@@ -43,22 +37,23 @@ def df_pipeline(spark_session: SparkSession):
 
 if __name__ == "__main__":
     spark_session = get_spark_session()
-    df = sp.get_historic_data_df(spark_session, historic_data_schema)
+    sp.request_data()
+    mongo.get_mongo_client()
+    df = sp.read_data(spark_session, traffic_sensor_schema)
+    df = sp.clean_data(df)
+    df = sp.utm_to_latlong(df)
+    df = sp.get_districts(df)
+    df = sp.assign_colors(df)
+    load_to_mongo(df)
+    df.show()
+
+#     mongo.get_mongo_client()
+#     mongo.load_districts()
+#     mongo.sensor_districts_correspondence()
+    # df = sp.get_historic_data_df(spark_session, historic_data_schema)
     # df = df_pipeline(spark_session)
-    filtered_df_1 = sp.filter_district(df, 'Arganzuela')
-    filtered_df_2 = sp.filter_district(df, 'Chamartin')
-    filtered_df_1 = sp.agg_district_by_time(filtered_df_1)
-    filtered_df_2 = sp.agg_district_by_time(filtered_df_2)
-    filtered_df_1 = sp.cast_to_datetime(filtered_df_1)
-    filtered_df_2 = sp.cast_to_datetime(filtered_df_2)
-    # filtered_df = filtered_df.pivot(index='fecha_hora', columns='subarea', values='avg(carga)').drop(columns=np.nan, errors='ignore')
-    print(filtered_df_1)
-    print(filtered_df_2)
 
-
-    with open('colorfile.txt', 'w') as file:
-        for district in constants.districts.keys():
-            print(district)
-            file.write(f"{district}: {sp.generate_subarea_colors(df, district)} \n")
-# #
-#
+    # with open('colorfile.txt', 'w') as file:
+    #     for district in constants.districts.keys():
+    #         print(district)
+    #         file.write(f"{district}: {sp.generate_subarea_colors(df, district)} \n")
