@@ -9,7 +9,7 @@ import json
 structlog.configure(processors=[structlog.processors.JSONRenderer()])
 log = structlog.getLogger()
 
-ttl = 3600 & 24 * 30
+ttl = 3600 * 24 * 30
 
 
 def load_to_mongo(df):
