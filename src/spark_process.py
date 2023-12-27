@@ -129,5 +129,5 @@ def assign_colors(df: DataFrame) -> DataFrame:
 
 
 def get_n_first_elements_by_field(df: DataFrame, n: int, field: str) -> DataFrame:
-    filtered_df = df.select('idelem', field, 'subarea_color', 'descripcion', 'intensidadSat').limit(n)
-    return filtered_df.withColumn('idelem', filtered_df.idelem.cast(StringType())).sort(field, ascending=False).toPandas()
+    filtered_df = df.select('idelem', field, 'subarea_color', 'descripcion', 'intensidadSat')
+    return filtered_df.withColumn('idelem', filtered_df.idelem.cast(StringType())).sort(field, ascending=False).limit(n).toPandas()
