@@ -94,9 +94,9 @@ def get_index_map_data(n_intervals):
         lat=controls_df['latitud'], lon=controls_df['longitud'], 
         hovertext=controls_df[['velocidad']],
         marker=go.scattermapbox.Marker(
-            size=15, 
-            symbol="diamond", 
-        )
+            symbol="triangle", 
+        ),
+        showlegend=False
     )
 
     district_agg = sp.agg_districts(df).toPandas()

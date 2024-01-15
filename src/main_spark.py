@@ -34,3 +34,12 @@ def df_pipeline(spark_session: SparkSession):
     mongo.health_check()
     load_to_mongo(df)
     return df
+
+if __name__ == "__main__":
+    spark = get_spark_session()
+    df = sp.read_data(spark, traffic_sensor_schema)
+    df = sp.clean_data(df)
+    df = sp.utm_to_latlong(df)
+    df = sp.get_districts(df)
+    df = sp.assign_colors(df)
+    df.show()

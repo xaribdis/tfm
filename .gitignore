@@ -55,3 +55,4 @@ dmypy.json
 *.xml
 iris.json
 lala.ipynb
+db_data/

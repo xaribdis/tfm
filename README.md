@@ -18,7 +18,7 @@ Real time traffic data from Madrid with periodicity of 5 min.
 - **ocupacion:** Percentage of time a sensor is occupied by a vehicle.
 - **carga:** Charge parameter estimated from occupation and vial saturation intensity. Represents a degree of saturation of the vial, from 0 (no traffic) to 100 (saturation).
 - **nivelServicio:** 0-fluid; 1-slow; 2-retentions; 3-congestion
-- **intensidadSat:** Max intensity supported by the vial in veh/hMax intensity supported by the vial in veh/h.
+- **intensidadSat:** Max intensity supported by the vial in veh/h.
 - **error:** Control code of data validity on the measure point.
 - **subarea:** Code identification of the subarea to which the sensor is placed.
 - **st_x:** X UTM coordinate of the sensor.
