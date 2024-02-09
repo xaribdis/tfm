@@ -12,7 +12,8 @@ services:
   spark-master:
 #    image: myapp
     build: .
-    entrypoint: /init.sh
+    # entrypoint: /init.sh
+    command: ../bin/spark-class org.apache.spark.deploy.master.Master
     ports:
       - "9090:8080"
       - "7077:7077"

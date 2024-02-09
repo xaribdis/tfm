@@ -19,6 +19,7 @@ def get_spark_session() -> SparkSession:
 
     logger = spark_session._jvm.org.apache.log4j
     logger.LogManager.getLogger("org").setLevel(logger.Level.FATAL)
+    spark_session.sql("set spark.sql.legacy.timeParserPolicy=LEGACY")
     return spark_session
 
 
@@ -42,4 +43,5 @@ if __name__ == "__main__":
     df = sp.utm_to_latlong(df)
     df = sp.get_districts(df)
     df = sp.assign_colors(df)
+    mongo.health_check()
     df.show()

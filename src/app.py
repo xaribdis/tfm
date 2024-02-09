@@ -153,7 +153,7 @@ def display_page(pathname):
 
 if __name__ == "__main__":
     try:
-        app.run_server(host='0.0.0.0', debug=True)
+        app.run_server(host='0.0.0.0', debug=False)
     except KeyboardInterrupt:
         mongo.close_connection()
         print('Interrupted')

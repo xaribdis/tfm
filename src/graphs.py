@@ -84,7 +84,7 @@ def plot_subarea_box(df, value):
     filtered_df = filtered_df.pivot(index='fecha_hora', columns='subarea', values='avg(carga)').drop(columns=np.nan, errors='ignore')
 
     fig = go.Figure(data=[go.Box(
-        y=filtered_df[col].values, name=col, marker_color=settings.SUBAREA_COLORS[value][col], opacity=0.8) for col in filtered_df])
+        y=filtered_df[col].values, name=col, marker_color=settings.SUBAREA_COLORS[value].get(col, "hsl(70, 8%, 15%)"), opacity=0.8) for col in filtered_df])
     fig.update_layout(margin=dict(l=10, r=10, t=10, b=10), showlegend=False)
     fig.update_yaxes(title="avg(carga)", range=[0, 100])
 
@@ -97,8 +97,6 @@ def plot_count_service_levels(df, value):
 
     agg_df = district_df.groupby('nivelServicio').count().reset_index()
 
-    fig = px.pie(agg_df, values='idelem', names='nivelServicio')
-    fig.update_layout(margin=dict(l=10, r=10, t=10, b=10), showlegend=False)
+    fig = px.pie(agg_df, values='idelem', names='nivelServicio', width=150, height=150)
+    fig.update_layout(margin=dict(l=15, r=15, t=15, b=15), showlegend=True)
     return fig
-
-

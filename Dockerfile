@@ -12,7 +12,7 @@ USER root
 
 RUN  chmod +x /init.sh
 
-ADD app ./code/app
+ADD src ./code/src
 
 RUN mkdir ./code/data
 

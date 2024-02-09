@@ -25,6 +25,10 @@ def clean_data(df):
     return df.filter(df.intensidad > -1)
 
 
+def m30_subarea(df: DataFrame):
+    filtered_df = df.filter(col('velocidad'))
+
+
 # Get date and hour from xml header
 def get_fecha_hora():
     with open("data/traffic_data.xml", encoding="utf-8") as xml:
