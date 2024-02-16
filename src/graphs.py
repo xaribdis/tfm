@@ -97,6 +97,6 @@ def plot_count_service_levels(df, value):
 
     agg_df = district_df.groupby('nivelServicio').count().reset_index()
 
-    fig = px.pie(agg_df, values='idelem', names='nivelServicio', width=150, height=150)
+    fig = px.pie(agg_df, values='idelem', names='nivelServicio', width=450, height=450)
     fig.update_layout(margin=dict(l=15, r=15, t=15, b=15), showlegend=True)
     return fig

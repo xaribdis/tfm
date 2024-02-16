@@ -6,7 +6,7 @@ COPY /spark/jars/spark-xml_2.12-0.13.0.jar jars/spark-xml_2.12-0.13.0.jar
 COPY /spark/jars/bson-4.10.2.jar jars/bson-4.10.2.jar
 COPY /spark/jars/mongodb-driver-sync-4.10.2.jar jars/mongodb-driver-sync-4.10.2.jar
 COPY /spark/jars/mongodb-driver-core-4.10.2.jar jars/mongodb-driver-core-4.10.2.jar
-COPY ./init.sh /init.sh
+COPY ./init.sh code/init.sh
 
 USER root
 

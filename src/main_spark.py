@@ -26,6 +26,7 @@ def get_spark_session() -> SparkSession:
 # Read, preprocess and load data to mongo, and check everything is correct in database
 def df_pipeline(spark_session: SparkSession):
     sp.request_data()
+    SparkSession.sparkContext.addFile('data/traffic_data.xml')
     mongo.get_mongo_client()
     df = sp.read_data(spark_session, traffic_sensor_schema)
     df = sp.clean_data(df)

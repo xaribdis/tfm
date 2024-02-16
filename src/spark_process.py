@@ -1,6 +1,7 @@
-from pyspark.sql.functions import lit, udf, col, to_timestamp, regexp_replace
+from pyspark.sql.functions import lit, udf, col, to_timestamp, regexp_replace, when
 from pyspark.sql.types import DoubleType, StringType
 from pyspark.sql import SparkSession, DataFrame
+from pyspark import SparkFiles
 import requests
 import utm
 import pandas as pd
@@ -12,7 +13,8 @@ from src.config import settings
 # Request the data to the url and save in an xml file
 def request_data():
     url = "https://datos.madrid.es/egob/catalogo/202087-0-trafico-intensidad.xml"
-    r = requests.get(url)
+    header = { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36', }
+    r = requests.get(url, headers=header)
 
     with open("data/traffic_data.xml", 'wb') as file:
         file.write(r._content)
@@ -22,11 +24,9 @@ def request_data():
 # Remove sensors with no data
 def clean_data(df):
     df = df.filter(df.carga < 100)
-    return df.filter(df.intensidad > -1)
-
-
-def m30_subarea(df: DataFrame):
-    filtered_df = df.filter(col('velocidad'))
+    df = df.filter(df.intensidad > -1)
+    df = df.withColumn('subarea', when('velocidad is Not Null'), 'M30').otherwise(col('subarea'))
+    return df.withColumn('intensidad', when(col('intensidad') == -1), 0).otherwise(col('intensidad'))
 
 
 # Get date and hour from xml header
@@ -54,6 +54,7 @@ def get_districts(df: DataFrame) -> DataFrame:
 
 # Read data from xml file into dataframe
 def read_data(spark_session: SparkSession, custom_schema) -> DataFrame:
+    file_path = SparkFiles.get('traffic_data.xml')
     fecha_hora = get_fecha_hora()
     # print('FECHA_HORA:', fecha_hora)
 
@@ -61,7 +62,7 @@ def read_data(spark_session: SparkSession, custom_schema) -> DataFrame:
         .format('xml') \
         .options(rowTag='pm') \
         .option("mode", "DROPMALFORMED") \
-        .load("data/traffic_data.xml", schema=custom_schema)
+        .load(file_path, schema=custom_schema)
 
     df = df.withColumn("fecha_hora", to_timestamp(lit(fecha_hora), "dd/MM/yyyy HH:mm:ss"))
     df = df.withColumn('st_x', regexp_replace('st_x', ',', '.').cast(DoubleType()))
