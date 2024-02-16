@@ -15,7 +15,7 @@ def request_data():
     url = "https://datos.madrid.es/egob/catalogo/202087-0-trafico-intensidad.xml"
     header = { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36', }
     r = requests.get(url, headers=header)
-
+    
     with open("data/traffic_data.xml", 'wb') as file:
         file.write(r._content)
     r.close()
